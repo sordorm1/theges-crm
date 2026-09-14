@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useParams, notFound } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useAppData } from "@/lib/data/store-context";
@@ -18,10 +18,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function ExamProgramPage() {
-  const params = useParams<{ programId: string }>();
+function ExamProgramPageInner() {
+  const searchParams = useSearchParams();
+  const programKey = searchParams.get("program") ?? "";
   const { students, partners, examPrograms } = useAppData();
-  const program = examPrograms.find((p) => p.key === params.programId);
+  const program = examPrograms.find((p) => p.key === programKey);
 
   const [partnerFilter, setPartnerFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<ExamStatus | "all">("all");
@@ -49,7 +50,20 @@ export default function ExamProgramPage() {
       );
   }, [students, program, partnerFilter, statusFilter, from, to]);
 
-  if (!program) return notFound();
+  if (!program) {
+    return (
+      <div className="mx-auto flex max-w-7xl flex-col gap-4">
+        <Link
+          href="/exams"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          Все экзамены
+        </Link>
+        <p className="text-sm text-muted-foreground">Программа не найдена</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
@@ -146,5 +160,13 @@ export default function ExamProgramPage() {
 
       <StudentDetailSheet student={selected} open={detailOpen} onOpenChange={setDetailOpen} />
     </div>
+  );
+}
+
+export default function ExamProgramPage() {
+  return (
+    <Suspense fallback={null}>
+      <ExamProgramPageInner />
+    </Suspense>
   );
 }

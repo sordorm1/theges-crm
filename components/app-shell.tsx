@@ -9,6 +9,7 @@ import { useAppData } from "@/lib/data/store-context";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { BASE_PATH } from "@/lib/base-path";
 
 const MIN_SPLASH_MS = 1000;
 const MAX_SPLASH_MS = 2000;
@@ -51,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <Menu className="size-5" />
             </Button>
-            <Image src="/logo.png" alt="the GES" width={24} height={24} />
+            <Image src={`${BASE_PATH}/logo.png`} alt="the GES" width={24} height={24} />
             <span className="text-sm font-bold">the GES</span>
           </header>
 

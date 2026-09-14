@@ -45,3 +45,9 @@ next-env.d.ts
 
 # claude code local session state
 /.claude/
+
+# supabase CLI local cache
+supabase/.temp/
+
+# static export output (deployed to gh-pages branch, not tracked on main)
+/out/

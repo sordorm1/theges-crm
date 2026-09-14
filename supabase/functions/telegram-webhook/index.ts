@@ -1,16 +1,50 @@
-import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase/server";
-import { sendTelegramMessage, escapeHtml } from "@/lib/telegram";
-import { normalizeForSearch, normalizePhoneTail } from "@/lib/normalize";
-import { formatDate } from "@/lib/format";
-
-export const dynamic = "force-dynamic";
+import { supabaseAdmin } from "../_shared/supabase.ts";
 
 interface TelegramUpdate {
   message?: {
     chat: { id: number };
     text?: string;
   };
+}
+
+function normalizeForSearch(value: string): string {
+  return value.toLowerCase().replace(/[\s-]/g, "");
+}
+
+function normalizePhoneTail(value: string, tailLength = 9): string {
+  const digits = value.replace(/\D/g, "");
+  return digits.slice(-tailLength);
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("ru-RU", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function escapeHtml(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+async function sendTelegramMessage(chatId: number, text: string) {
+  const token = Deno.env.get("TELEGRAM_BOT_TOKEN");
+  if (!token) throw new Error("TELEGRAM_BOT_TOKEN is not set");
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Telegram sendMessage failed: ${res.status} ${body}`);
+  }
 }
 
 const WELCOME =
@@ -26,17 +60,19 @@ const NOT_FOUND =
 const AMBIGUOUS =
   "Нашлось несколько учеников с такими данными. Пожалуйста, обратитесь в центр the GES напрямую.";
 
-export async function POST(req: Request) {
+Deno.serve(async (req) => {
+  if (req.method !== "POST") return new Response("ok");
+
   const update = (await req.json()) as TelegramUpdate;
   const message = update.message;
-  if (!message?.text) return NextResponse.json({ ok: true });
+  if (!message?.text) return new Response(JSON.stringify({ ok: true }));
 
   const chatId = message.chat.id;
   const text = message.text.trim();
 
   if (text.startsWith("/start")) {
     await sendTelegramMessage(chatId, WELCOME);
-    return NextResponse.json({ ok: true });
+    return new Response(JSON.stringify({ ok: true }));
   }
 
   const phoneTail = normalizePhoneTail(text);
@@ -44,45 +80,42 @@ export async function POST(req: Request) {
 
   if (phoneTail.length < 7 || namePart.length < 2) {
     await sendTelegramMessage(chatId, WELCOME);
-    return NextResponse.json({ ok: true });
+    return new Response(JSON.stringify({ ok: true }));
   }
 
   const db = supabaseAdmin();
-  const { data: students, error } = await db
-    .from("students")
-    .select(
-      `id, first_name, middle_name, last_name, passport_number, phone, email,
-       exam_records ( id, date, status, level_label, login, password, exam_key,
-         exam_programs ( name, subjects ( label ) ) )`,
-    );
+  const { data: students, error } = await db.from("students").select(
+    `id, first_name, middle_name, last_name, passport_number, phone, email,
+     exam_records ( id, date, status, level_label, login, password, exam_key,
+       exam_programs ( name, subjects ( label ) ) )`,
+  );
 
   if (error) {
     await sendTelegramMessage(chatId, "Техническая ошибка, попробуйте позже.");
-    return NextResponse.json({ ok: true });
+    return new Response(JSON.stringify({ ok: true }));
   }
 
-  const matches = (students ?? []).filter((s) => {
+  const nameTokens = text
+    .replace(/[+\d][\d\s()-]*/g, " ")
+    .split(/\s+/)
+    .map(normalizeForSearch)
+    .filter((t) => t.length >= 2);
+
+  // deno-lint-ignore no-explicit-any
+  const matches = (students ?? []).filter((s: any) => {
     const phoneMatch = normalizePhoneTail(s.phone ?? "") === phoneTail;
-    const fullName = normalizeForSearch(
-      `${s.last_name} ${s.first_name} ${s.middle_name ?? ""}`,
-    );
-    const nameTokens = text
-      .replace(/[+\d][\d\s()-]*/g, " ")
-      .split(/\s+/)
-      .map(normalizeForSearch)
-      .filter((t) => t.length >= 2);
-    const nameMatch =
-      nameTokens.length > 0 && nameTokens.every((token) => fullName.includes(token));
+    const fullName = normalizeForSearch(`${s.last_name} ${s.first_name} ${s.middle_name ?? ""}`);
+    const nameMatch = nameTokens.length > 0 && nameTokens.every((token) => fullName.includes(token));
     return phoneMatch && nameMatch;
   });
 
   if (matches.length === 0) {
     await sendTelegramMessage(chatId, NOT_FOUND);
-    return NextResponse.json({ ok: true });
+    return new Response(JSON.stringify({ ok: true }));
   }
   if (matches.length > 1) {
     await sendTelegramMessage(chatId, AMBIGUOUS);
-    return NextResponse.json({ ok: true });
+    return new Response(JSON.stringify({ ok: true }));
   }
 
   const student = matches[0];
@@ -93,21 +126,10 @@ export async function POST(req: Request) {
   if (student.email) lines.push(`Email: ${escapeHtml(student.email)}`);
   lines.push("");
 
-  type ExamRow = {
-    id: string;
-    date: string;
-    status: string;
-    level_label: string | null;
-    login: string;
-    password: string;
-    exam_key: string;
-    exam_programs: { name: string; subjects: { label: string } | null } | null;
-  };
+  // deno-lint-ignore no-explicit-any
+  const records = (student.exam_records ?? []) as any[];
+  if (records.length === 0) lines.push("Курсы пока не назначены.");
 
-  const records = (student.exam_records ?? []) as unknown as ExamRow[];
-  if (records.length === 0) {
-    lines.push("Курсы пока не назначены.");
-  }
   for (const r of records) {
     const programName = r.exam_programs?.name ?? "—";
     const subjectLabel = r.exam_programs?.subjects?.label;
@@ -121,5 +143,5 @@ export async function POST(req: Request) {
   }
 
   await sendTelegramMessage(chatId, lines.join("\n").trim());
-  return NextResponse.json({ ok: true });
-}
+  return new Response(JSON.stringify({ ok: true }));
+});

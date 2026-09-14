@@ -1,7 +1,5 @@
-"use server";
-
-import { supabaseAdmin } from "@/lib/supabase/server";
-import type { ExamRecord, PaymentComment, Student } from "@/lib/types";
+import { supabase, EDGE_FUNCTIONS_URL } from "@/lib/supabase/client";
+import type { ExamRecord, ExamStatus, PaymentComment, Student } from "@/lib/types";
 
 interface ExamRecordRow {
   id: string;
@@ -88,12 +86,33 @@ const STUDENT_SELECT = `
 `;
 
 export async function listStudents(): Promise<Student[]> {
-  const { data, error } = await supabaseAdmin()
+  const { data, error } = await supabase
     .from("students")
     .select(STUDENT_SELECT)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data as unknown as StudentRow[]).map(mapStudent);
+}
+
+interface ExamRecordInput {
+  examProgramId: string;
+  date: string;
+  status: ExamStatus;
+  levelLabel?: string;
+  login: string;
+  password: string;
+  examKey: string;
+}
+
+async function callStudentsFunction(body: unknown): Promise<Student> {
+  const res = await fetch(`${EDGE_FUNCTIONS_URL}/students`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Request failed");
+  return data as Student;
 }
 
 export async function createStudent(input: {
@@ -104,85 +123,14 @@ export async function createStudent(input: {
   phone: string;
   email?: string;
   partnerId: string | null;
-  examRecord?: {
-    examProgramId: string;
-    date: string;
-    status: ExamRecord["status"];
-    levelLabel?: string;
-    login: string;
-    password: string;
-    examKey: string;
-  };
+  examRecord?: ExamRecordInput;
 }): Promise<Student> {
-  const db = supabaseAdmin();
-  const { data: student, error } = await db
-    .from("students")
-    .insert({
-      first_name: input.firstName,
-      middle_name: input.middleName ?? null,
-      last_name: input.lastName,
-      passport_number: input.passportNumber,
-      phone: input.phone,
-      email: input.email ?? null,
-      partner_id: input.partnerId,
-    })
-    .select("id")
-    .single();
-  if (error) throw error;
-
-  if (input.examRecord) {
-    const { error: examError } = await db.from("exam_records").insert({
-      student_id: student.id,
-      exam_program_id: input.examRecord.examProgramId,
-      date: input.examRecord.date,
-      status: input.examRecord.status,
-      level_label: input.examRecord.levelLabel ?? null,
-      login: input.examRecord.login,
-      password: input.examRecord.password,
-      exam_key: input.examRecord.examKey,
-    });
-    if (examError) throw examError;
-  }
-
-  const { data: full, error: fetchError } = await db
-    .from("students")
-    .select(STUDENT_SELECT)
-    .eq("id", student.id)
-    .single();
-  if (fetchError) throw fetchError;
-  return mapStudent(full as unknown as StudentRow);
+  return callStudentsFunction({ action: "create", student: input });
 }
 
 export async function addExamRecordToStudent(
   studentId: string,
-  input: {
-    examProgramId: string;
-    date: string;
-    status: ExamRecord["status"];
-    levelLabel?: string;
-    login: string;
-    password: string;
-    examKey: string;
-  },
+  examRecord: ExamRecordInput,
 ): Promise<Student> {
-  const db = supabaseAdmin();
-  const { error } = await db.from("exam_records").insert({
-    student_id: studentId,
-    exam_program_id: input.examProgramId,
-    date: input.date,
-    status: input.status,
-    level_label: input.levelLabel ?? null,
-    login: input.login,
-    password: input.password,
-    exam_key: input.examKey,
-  });
-  if (error) throw error;
-
-  const { data: full, error: fetchError } = await db
-    .from("students")
-    .select(STUDENT_SELECT)
-    .eq("id", studentId)
-    .single();
-  if (fetchError) throw fetchError;
-  return mapStudent(full as unknown as StudentRow);
+  return callStudentsFunction({ action: "add-exam", studentId, examRecord });
 }

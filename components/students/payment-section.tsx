@@ -10,7 +10,7 @@ import { PinDialog } from "@/components/pin-dialog";
 import { useAppData } from "@/lib/data/store-context";
 import { formatUsd, formatTashkentDateTime } from "@/lib/format";
 import type { ExamRecord } from "@/lib/types";
-import type { FeeField } from "@/lib/actions/payments";
+import type { FeeField } from "@/lib/api/payments";
 
 const FEE_FIELDS: { field: FeeField; label: string }[] = [
   { field: "registrationFeeUsd", label: "Регистрация" },

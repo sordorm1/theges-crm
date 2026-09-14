@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { BASE_PATH } from "@/lib/base-path";
 
 export function SplashScreen() {
   return (
@@ -17,7 +18,7 @@ export function SplashScreen() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="rounded-3xl bg-white/95 p-6 shadow-2xl shadow-black/30"
       >
-        <Image src="/logo.png" alt="the GES" width={96} height={96} priority />
+        <Image src={`${BASE_PATH}/logo.png`} alt="the GES" width={96} height={96} priority />
       </motion.div>
       <motion.div
         initial={{ opacity: 0, y: 8 }}

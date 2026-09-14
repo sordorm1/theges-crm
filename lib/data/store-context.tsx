@@ -17,12 +17,12 @@ import type {
   SubjectLevel,
   SubjectRow,
 } from "@/lib/types";
-import { listPartners, createPartner as createPartnerAction } from "@/lib/actions/partners";
+import { listPartners, createPartner as createPartnerAction } from "@/lib/api/partners";
 import {
   listStudents,
   createStudent as createStudentAction,
   addExamRecordToStudent as addExamRecordAction,
-} from "@/lib/actions/students";
+} from "@/lib/api/students";
 import {
   listSubjects,
   addSubject as addSubjectAction,
@@ -30,13 +30,13 @@ import {
   addSubjectLevel as addSubjectLevelAction,
   listExamPrograms,
   addExamProgram as addExamProgramAction,
-} from "@/lib/actions/catalog";
+} from "@/lib/api/catalog";
 import {
   updateExamFee as updateExamFeeAction,
   addPaymentComment as addPaymentCommentAction,
   type FeeField,
   type UpdateFeeResult,
-} from "@/lib/actions/payments";
+} from "@/lib/api/payments";
 import { normalizeForSearch } from "@/lib/normalize";
 
 interface AppDataContextValue {

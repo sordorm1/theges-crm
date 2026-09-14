@@ -46,7 +46,7 @@ export default function ExamsPage() {
             transition={{ delay: i * 0.05, duration: 0.3 }}
           >
             <Link
-              href={`/exams/${program.key}`}
+              href={`/exams/view?program=${program.key}`}
               className="group flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
               <div className="flex items-center justify-between">
