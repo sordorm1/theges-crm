@@ -22,6 +22,9 @@ export interface ExamRecordDraft {
   login: string;
   password: string;
   examKey: string;
+  registrationFeeUsd: string;
+  examFeeUsd: string;
+  consultationFeeUsd: string;
 }
 
 export const EMPTY_EXAM_RECORD_DRAFT: ExamRecordDraft = {
@@ -33,6 +36,9 @@ export const EMPTY_EXAM_RECORD_DRAFT: ExamRecordDraft = {
   login: "",
   password: "",
   examKey: "",
+  registrationFeeUsd: "",
+  examFeeUsd: "",
+  consultationFeeUsd: "",
 };
 
 export function ExamRecordForm({
@@ -164,6 +170,39 @@ export function ExamRecordForm({
             value={value.examKey}
             onChange={(e) => patch({ examKey: e.target.value })}
             className="font-mono"
+          />
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Суммы в долларах. Изменить уже сохранённую сумму позже можно будет только с кодом руководителя.
+      </p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="flex flex-col gap-1.5">
+          <Label>Регистрация, $</Label>
+          <Input
+            inputMode="decimal"
+            value={value.registrationFeeUsd}
+            onChange={(e) => patch({ registrationFeeUsd: e.target.value })}
+            placeholder="0"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label>Экзамен, $</Label>
+          <Input
+            inputMode="decimal"
+            value={value.examFeeUsd}
+            onChange={(e) => patch({ examFeeUsd: e.target.value })}
+            placeholder="0"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label>Консультация, $</Label>
+          <Input
+            inputMode="decimal"
+            value={value.consultationFeeUsd}
+            onChange={(e) => patch({ consultationFeeUsd: e.target.value })}
+            placeholder="0"
           />
         </div>
       </div>

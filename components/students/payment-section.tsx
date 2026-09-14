@@ -26,26 +26,32 @@ function FeeRow({ examRecord, field, label }: { examRecord: ExamRecord; field: F
   const [pinOpen, setPinOpen] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
   const [pendingValue, setPendingValue] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
 
   async function save(value: number, pin?: string) {
-    const result = await updateExamFee(examRecord.id, field, value, pin);
-    if (result.ok) {
-      toast.success(`${label}: сохранено`);
-      setEditing(false);
-      setPinOpen(false);
-      setPinError(null);
-      return;
+    setSaving(true);
+    try {
+      const result = await updateExamFee(examRecord.id, field, value, pin);
+      if (result.ok) {
+        toast.success(`${label}: сохранено`);
+        setEditing(false);
+        setPinOpen(false);
+        setPinError(null);
+        return;
+      }
+      if (result.error === "PIN_REQUIRED") {
+        setPendingValue(value);
+        setPinOpen(true);
+        return;
+      }
+      if (result.error === "PIN_INVALID") {
+        setPinError("Неверный код");
+        return;
+      }
+      toast.error("Не удалось сохранить сумму");
+    } finally {
+      setSaving(false);
     }
-    if (result.error === "PIN_REQUIRED") {
-      setPendingValue(value);
-      setPinOpen(true);
-      return;
-    }
-    if (result.error === "PIN_INVALID") {
-      setPinError("Неверный код");
-      return;
-    }
-    toast.error("Не удалось сохранить сумму");
   }
 
   function handleSubmit() {
@@ -58,40 +64,62 @@ function FeeRow({ examRecord, field, label }: { examRecord: ExamRecord; field: F
   }
 
   return (
-    <div className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2">
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+    <div className="flex flex-col gap-1.5 rounded-lg bg-muted px-3 py-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+          {label}
+        </span>
+        {!editing && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6 shrink-0"
+            onClick={() => {
+              setDraft(currentValue !== undefined ? String(currentValue) : "");
+              setEditing(true);
+            }}
+          >
+            <Pencil className="size-3.5" />
+          </Button>
+        )}
+      </div>
+
       {editing ? (
         <div className="flex items-center gap-1">
           <Input
             autoFocus
+            inputMode="decimal"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSubmit();
               if (e.key === "Escape") setEditing(false);
             }}
-            className="h-7 w-24 text-right font-mono text-sm"
+            disabled={saving}
+            className="h-8 min-w-0 flex-1 font-mono text-sm"
             placeholder="0"
           />
-          <Button variant="ghost" size="icon" className="size-6" onClick={handleSubmit}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 shrink-0"
+            disabled={saving}
+            onClick={handleSubmit}
+          >
             <Check className="size-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" className="size-6" onClick={() => setEditing(false)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 shrink-0"
+            disabled={saving}
+            onClick={() => setEditing(false)}
+          >
             <X className="size-3.5" />
           </Button>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => {
-            setDraft(currentValue !== undefined ? String(currentValue) : "");
-            setEditing(true);
-          }}
-          className="flex items-center gap-1.5 font-mono text-sm font-medium hover:text-primary"
-        >
-          {formatUsd(currentValue)}
-          <Pencil className="size-3 text-muted-foreground" />
-        </button>
+        <div className="font-mono text-sm font-medium">{formatUsd(currentValue)}</div>
       )}
 
       <PinDialog
@@ -128,7 +156,10 @@ export function PaymentSection({ examRecord }: { examRecord: ExamRecord }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-dashed border-border p-3">
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card/50 p-3">
+      <div className="flex items-center gap-1.5 text-xs font-semibold">
+        Оплата
+      </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {FEE_FIELDS.map(({ field, label }) => (
           <FeeRow key={field} examRecord={examRecord} field={field} label={label} />
@@ -143,7 +174,7 @@ export function PaymentSection({ examRecord }: { examRecord: ExamRecord }) {
         <div className="flex flex-col gap-1.5">
           {(examRecord.paymentComments ?? []).map((c) => (
             <div key={c.id} className="rounded-lg bg-muted px-3 py-2 text-sm">
-              <div>{c.text}</div>
+              <div className="break-words">{c.text}</div>
               <div className="mt-1 text-[11px] text-muted-foreground">
                 {formatTashkentDateTime(c.createdAt)} (Ташкент)
               </div>
@@ -153,16 +184,16 @@ export function PaymentSection({ examRecord }: { examRecord: ExamRecord }) {
             <p className="text-xs text-muted-foreground">Комментариев пока нет</p>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Например: оплатил наличными 50%..."
-            className="min-h-16 text-sm"
+            className="min-h-16 flex-1 text-sm"
           />
           <Button
             size="sm"
-            className="self-end"
+            className="self-start sm:self-end"
             disabled={!comment.trim() || submitting}
             onClick={handleAddComment}
           >

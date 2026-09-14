@@ -95,6 +95,9 @@ export function AddStudentDialog({
               login: exam.login.trim(),
               password: exam.password.trim(),
               examKey: exam.examKey.trim(),
+              registrationFeeUsd: exam.registrationFeeUsd ? Number(exam.registrationFeeUsd) : undefined,
+              examFeeUsd: exam.examFeeUsd ? Number(exam.examFeeUsd) : undefined,
+              consultationFeeUsd: exam.consultationFeeUsd ? Number(exam.consultationFeeUsd) : undefined,
             }
           : undefined,
       });

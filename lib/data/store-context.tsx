@@ -10,7 +10,6 @@ import {
 } from "react";
 import type {
   ExamProgram,
-  ExamStatus,
   Partner,
   PaymentComment,
   Student,
@@ -22,6 +21,10 @@ import {
   listStudents,
   createStudent as createStudentAction,
   addExamRecordToStudent as addExamRecordAction,
+  updateStudentProfile as updateStudentProfileAction,
+  updateExamRecord as updateExamRecordAction,
+  type StudentProfileInput,
+  type ExamRecordEditInput,
 } from "@/lib/api/students";
 import {
   listSubjects,
@@ -57,37 +60,14 @@ interface AppDataContextValue {
   }) => Promise<Partner>;
   nextPartnerCode: (name: string) => string;
 
-  addStudent: (student: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-    passportNumber: string;
-    phone: string;
-    email?: string;
-    partnerId: string | null;
-    examRecord?: {
-      examProgramId: string;
-      date: string;
-      status: ExamStatus;
-      levelLabel?: string;
-      login: string;
-      password: string;
-      examKey: string;
-    };
-  }) => Promise<Student>;
+  addStudent: (student: Parameters<typeof createStudentAction>[0]) => Promise<Student>;
   addExamRecordToStudent: (
     studentId: string,
-    examRecord: {
-      examProgramId: string;
-      date: string;
-      status: ExamStatus;
-      levelLabel?: string;
-      login: string;
-      password: string;
-      examKey: string;
-    },
+    examRecord: Parameters<typeof addExamRecordAction>[1],
   ) => Promise<Student>;
   findStudentsByQuery: (query: string) => Student[];
+  updateStudentProfile: (studentId: string, profile: StudentProfileInput) => Promise<Student>;
+  updateExamRecord: (examRecordId: string, examRecord: ExamRecordEditInput) => Promise<Student>;
 
   addSubject: (key: string, label: string) => Promise<SubjectRow>;
   addSubjectLevel: (subjectId: string, label: string) => Promise<SubjectLevel>;
@@ -189,6 +169,24 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const updateStudentProfile = useCallback(
+    async (studentId: string, profile: StudentProfileInput) => {
+      const updated = await updateStudentProfileAction(studentId, profile);
+      setStudents((prev) => prev.map((s) => (s.id === studentId ? updated : s)));
+      return updated;
+    },
+    [],
+  );
+
+  const updateExamRecord = useCallback(
+    async (examRecordId: string, examRecord: ExamRecordEditInput) => {
+      const updated = await updateExamRecordAction(examRecordId, examRecord);
+      setStudents((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+      return updated;
+    },
+    [],
+  );
+
   const findStudentsByQuery = useCallback(
     (query: string) => {
       const q = normalizeForSearch(query.trim());
@@ -263,6 +261,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       addStudent,
       addExamRecordToStudent,
       findStudentsByQuery,
+      updateStudentProfile,
+      updateExamRecord,
       addSubject,
       addSubjectLevel,
       addExamProgram,
@@ -283,6 +283,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       addStudent,
       addExamRecordToStudent,
       findStudentsByQuery,
+      updateStudentProfile,
+      updateExamRecord,
       addSubject,
       addSubjectLevel,
       addExamProgram,

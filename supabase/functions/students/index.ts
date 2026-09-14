@@ -55,22 +55,38 @@ interface ExamRecordInput {
   login: string;
   password: string;
   examKey: string;
+  registrationFeeUsd?: number;
+  examFeeUsd?: number;
+  consultationFeeUsd?: number;
+}
+
+interface StudentProfileInput {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  passportNumber: string;
+  phone: string;
+  email?: string;
+  partnerId: string | null;
+}
+
+interface ExamRecordEditInput {
+  date: string;
+  status: string;
+  levelLabel?: string;
+  login: string;
+  password: string;
+  examKey: string;
 }
 
 interface RequestBody {
-  action: "create" | "add-exam";
-  student?: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-    passportNumber: string;
-    phone: string;
-    email?: string;
-    partnerId: string | null;
-    examRecord?: ExamRecordInput;
-  };
+  action: "create" | "add-exam" | "update-profile" | "update-exam";
+  student?: StudentProfileInput & { examRecord?: ExamRecordInput };
   studentId?: string;
   examRecord?: ExamRecordInput;
+  profile?: StudentProfileInput;
+  examRecordId?: string;
+  examRecordEdit?: ExamRecordEditInput;
 }
 
 Deno.serve(async (req) => {
@@ -111,6 +127,9 @@ Deno.serve(async (req) => {
           login: input.examRecord.login,
           password: input.examRecord.password,
           exam_key: input.examRecord.examKey,
+          registration_fee_usd: input.examRecord.registrationFeeUsd ?? null,
+          exam_fee_usd: input.examRecord.examFeeUsd ?? null,
+          consultation_fee_usd: input.examRecord.consultationFeeUsd ?? null,
         });
         if (examError) throw examError;
       }
@@ -137,6 +156,9 @@ Deno.serve(async (req) => {
         login: body.examRecord.login,
         password: body.examRecord.password,
         exam_key: body.examRecord.examKey,
+        registration_fee_usd: body.examRecord.registrationFeeUsd ?? null,
+        exam_fee_usd: body.examRecord.examFeeUsd ?? null,
+        consultation_fee_usd: body.examRecord.consultationFeeUsd ?? null,
       });
       if (error) throw error;
 
@@ -144,6 +166,63 @@ Deno.serve(async (req) => {
         .from("students")
         .select(STUDENT_SELECT)
         .eq("id", body.studentId)
+        .single();
+      if (fetchError) throw fetchError;
+      return jsonResponse(mapStudent(full));
+    }
+
+    if (body.action === "update-profile") {
+      if (!body.studentId || !body.profile) {
+        return jsonResponse({ error: "studentId and profile are required" }, 400);
+      }
+      const p = body.profile;
+      const { error } = await db
+        .from("students")
+        .update({
+          first_name: p.firstName,
+          middle_name: p.middleName ?? null,
+          last_name: p.lastName,
+          passport_number: p.passportNumber,
+          phone: p.phone,
+          email: p.email ?? null,
+          partner_id: p.partnerId,
+        })
+        .eq("id", body.studentId);
+      if (error) throw error;
+
+      const { data: full, error: fetchError } = await db
+        .from("students")
+        .select(STUDENT_SELECT)
+        .eq("id", body.studentId)
+        .single();
+      if (fetchError) throw fetchError;
+      return jsonResponse(mapStudent(full));
+    }
+
+    if (body.action === "update-exam") {
+      if (!body.examRecordId || !body.examRecordEdit) {
+        return jsonResponse({ error: "examRecordId and examRecordEdit are required" }, 400);
+      }
+      const r = body.examRecordEdit;
+      const { data: record, error } = await db
+        .from("exam_records")
+        .update({
+          date: r.date,
+          status: r.status,
+          level_label: r.levelLabel ?? null,
+          login: r.login,
+          password: r.password,
+          exam_key: r.examKey,
+        })
+        .eq("id", body.examRecordId)
+        .select("student_id")
+        .single();
+      if (error) throw error;
+
+      const { data: full, error: fetchError } = await db
+        .from("students")
+        .select(STUDENT_SELECT)
+        .eq("id", record.student_id)
         .single();
       if (fetchError) throw fetchError;
       return jsonResponse(mapStudent(full));

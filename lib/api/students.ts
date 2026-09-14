@@ -102,6 +102,9 @@ interface ExamRecordInput {
   login: string;
   password: string;
   examKey: string;
+  registrationFeeUsd?: number;
+  examFeeUsd?: number;
+  consultationFeeUsd?: number;
 }
 
 async function callStudentsFunction(body: unknown): Promise<Student> {
@@ -133,4 +136,37 @@ export async function addExamRecordToStudent(
   examRecord: ExamRecordInput,
 ): Promise<Student> {
   return callStudentsFunction({ action: "add-exam", studentId, examRecord });
+}
+
+export interface StudentProfileInput {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  passportNumber: string;
+  phone: string;
+  email?: string;
+  partnerId: string | null;
+}
+
+export async function updateStudentProfile(
+  studentId: string,
+  profile: StudentProfileInput,
+): Promise<Student> {
+  return callStudentsFunction({ action: "update-profile", studentId, profile });
+}
+
+export interface ExamRecordEditInput {
+  date: string;
+  status: ExamStatus;
+  levelLabel?: string;
+  login: string;
+  password: string;
+  examKey: string;
+}
+
+export async function updateExamRecord(
+  examRecordId: string,
+  examRecord: ExamRecordEditInput,
+): Promise<Student> {
+  return callStudentsFunction({ action: "update-exam", examRecordId, examRecordEdit: examRecord });
 }
