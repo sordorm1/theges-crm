@@ -11,6 +11,7 @@ import {
 import type { Student, Partner } from "@/lib/types";
 import { fullName, formatDate } from "@/lib/format";
 import { getProgram } from "@/lib/data/programs";
+import { useAppData } from "@/lib/data/store-context";
 import { StatusBadge } from "@/components/status-badge";
 
 export function StudentsTable({
@@ -25,6 +26,7 @@ export function StudentsTable({
   /** When set, show this specific exam program's record instead of the most recent one. */
   programId?: string;
 }) {
+  const { examPrograms } = useAppData();
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="overflow-x-auto">
@@ -45,7 +47,7 @@ export function StudentsTable({
               const lastExam = programId
                 ? s.examRecords.find((r) => r.examProgramId === programId)
                 : s.examRecords[s.examRecords.length - 1];
-              const program = lastExam ? getProgram(lastExam.examProgramId) : undefined;
+              const program = lastExam ? getProgram(examPrograms, lastExam.examProgramId) : undefined;
               return (
                 <TableRow
                   key={s.id}

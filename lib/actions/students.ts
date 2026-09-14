@@ -1,0 +1,188 @@
+"use server";
+
+import { supabaseAdmin } from "@/lib/supabase/server";
+import type { ExamRecord, PaymentComment, Student } from "@/lib/types";
+
+interface ExamRecordRow {
+  id: string;
+  exam_program_id: string;
+  date: string;
+  status: ExamRecord["status"];
+  score: string | null;
+  level_label: string | null;
+  login: string;
+  password: string;
+  exam_key: string;
+  registration_fee_usd: number | null;
+  exam_fee_usd: number | null;
+  consultation_fee_usd: number | null;
+  payment_comments?: PaymentCommentRow[];
+}
+
+interface PaymentCommentRow {
+  id: string;
+  exam_record_id: string;
+  text: string;
+  created_at: string;
+}
+
+interface StudentRow {
+  id: string;
+  first_name: string;
+  middle_name: string | null;
+  last_name: string;
+  passport_number: string;
+  phone: string;
+  email: string | null;
+  partner_id: string | null;
+  created_at: string;
+  exam_records: ExamRecordRow[];
+}
+
+function mapComment(c: PaymentCommentRow): PaymentComment {
+  return { id: c.id, examRecordId: c.exam_record_id, text: c.text, createdAt: c.created_at };
+}
+
+function mapExamRecord(r: ExamRecordRow): ExamRecord {
+  return {
+    id: r.id,
+    examProgramId: r.exam_program_id,
+    date: r.date,
+    status: r.status,
+    score: r.score ?? undefined,
+    levelLabel: r.level_label ?? undefined,
+    login: r.login,
+    password: r.password,
+    examKey: r.exam_key,
+    registrationFeeUsd: r.registration_fee_usd ?? undefined,
+    examFeeUsd: r.exam_fee_usd ?? undefined,
+    consultationFeeUsd: r.consultation_fee_usd ?? undefined,
+    paymentComments: (r.payment_comments ?? []).map(mapComment),
+  };
+}
+
+function mapStudent(s: StudentRow): Student {
+  return {
+    id: s.id,
+    firstName: s.first_name,
+    middleName: s.middle_name ?? undefined,
+    lastName: s.last_name,
+    passportNumber: s.passport_number,
+    phone: s.phone,
+    email: s.email ?? undefined,
+    partnerId: s.partner_id,
+    createdAt: s.created_at,
+    examRecords: (s.exam_records ?? [])
+      .map(mapExamRecord)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+  };
+}
+
+const STUDENT_SELECT = `
+  id, first_name, middle_name, last_name, passport_number, phone, email, partner_id, created_at,
+  exam_records (
+    id, exam_program_id, date, status, score, level_label, login, password, exam_key,
+    registration_fee_usd, exam_fee_usd, consultation_fee_usd,
+    payment_comments ( id, exam_record_id, text, created_at )
+  )
+`;
+
+export async function listStudents(): Promise<Student[]> {
+  const { data, error } = await supabaseAdmin()
+    .from("students")
+    .select(STUDENT_SELECT)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data as unknown as StudentRow[]).map(mapStudent);
+}
+
+export async function createStudent(input: {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  passportNumber: string;
+  phone: string;
+  email?: string;
+  partnerId: string | null;
+  examRecord?: {
+    examProgramId: string;
+    date: string;
+    status: ExamRecord["status"];
+    levelLabel?: string;
+    login: string;
+    password: string;
+    examKey: string;
+  };
+}): Promise<Student> {
+  const db = supabaseAdmin();
+  const { data: student, error } = await db
+    .from("students")
+    .insert({
+      first_name: input.firstName,
+      middle_name: input.middleName ?? null,
+      last_name: input.lastName,
+      passport_number: input.passportNumber,
+      phone: input.phone,
+      email: input.email ?? null,
+      partner_id: input.partnerId,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  if (input.examRecord) {
+    const { error: examError } = await db.from("exam_records").insert({
+      student_id: student.id,
+      exam_program_id: input.examRecord.examProgramId,
+      date: input.examRecord.date,
+      status: input.examRecord.status,
+      level_label: input.examRecord.levelLabel ?? null,
+      login: input.examRecord.login,
+      password: input.examRecord.password,
+      exam_key: input.examRecord.examKey,
+    });
+    if (examError) throw examError;
+  }
+
+  const { data: full, error: fetchError } = await db
+    .from("students")
+    .select(STUDENT_SELECT)
+    .eq("id", student.id)
+    .single();
+  if (fetchError) throw fetchError;
+  return mapStudent(full as unknown as StudentRow);
+}
+
+export async function addExamRecordToStudent(
+  studentId: string,
+  input: {
+    examProgramId: string;
+    date: string;
+    status: ExamRecord["status"];
+    levelLabel?: string;
+    login: string;
+    password: string;
+    examKey: string;
+  },
+): Promise<Student> {
+  const db = supabaseAdmin();
+  const { error } = await db.from("exam_records").insert({
+    student_id: studentId,
+    exam_program_id: input.examProgramId,
+    date: input.date,
+    status: input.status,
+    level_label: input.levelLabel ?? null,
+    login: input.login,
+    password: input.password,
+    exam_key: input.examKey,
+  });
+  if (error) throw error;
+
+  const { data: full, error: fetchError } = await db
+    .from("students")
+    .select(STUDENT_SELECT)
+    .eq("id", studentId)
+    .single();
+  if (fetchError) throw fetchError;
+  return mapStudent(full as unknown as StudentRow);
+}

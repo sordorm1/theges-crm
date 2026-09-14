@@ -21,18 +21,24 @@ import { formatDate, fullName } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
 
 export default function DashboardPage() {
-  const { students, partners } = useAppData();
+  const { students, partners, examPrograms, subjects } = useAppData();
   const [filters, setFilters] = useState<DashboardFilters>({
     partnerId: "all",
     subject: "all",
     status: "all",
   });
 
-  const filtered = useMemo(() => applyFilters(students, filters), [students, filters]);
+  const filtered = useMemo(
+    () => applyFilters(students, filters, examPrograms),
+    [students, filters, examPrograms],
+  );
 
   const monthly = useMemo(() => monthlyEnrollment(filtered), [filtered]);
   const ranking = useMemo(() => partnerRanking(filtered, partners), [filtered, partners]);
-  const programs = useMemo(() => programPopularity(filtered), [filtered]);
+  const programs = useMemo(
+    () => programPopularity(filtered, examPrograms),
+    [filtered, examPrograms],
+  );
   const thisMonth = useMemo(() => currentMonthCount(filtered), [filtered]);
   const rate = useMemo(() => computePassRate(filtered), [filtered]);
   const recent = useMemo(() => filtered.slice(0, 6), [filtered]);
@@ -49,7 +55,12 @@ export default function DashboardPage() {
             Обзор набора учеников, партнёров и курсов
           </p>
         </div>
-        <FilterSheet partners={partners} filters={filters} onApply={setFilters} />
+        <FilterSheet
+          partners={partners}
+          subjects={subjects}
+          filters={filters}
+          onApply={setFilters}
+        />
       </div>
 
       <KpiCards

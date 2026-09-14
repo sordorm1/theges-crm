@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu } from "lucide-react";
+import { Menu, Loader2, AlertTriangle } from "lucide-react";
 import { SplashScreen } from "@/components/splash-screen";
 import { Sidebar } from "@/components/sidebar";
 import { useAppData } from "@/lib/data/store-context";
@@ -14,7 +14,7 @@ const MIN_SPLASH_MS = 1000;
 const MAX_SPLASH_MS = 2000;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { ready } = useAppData();
+  const { ready, error } = useAppData();
   const [minTimeDone, setMinTimeDone] = useState(false);
   const [maxTimeDone, setMaxTimeDone] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -68,7 +68,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             transition={{ duration: 0.45, ease: "easeOut" }}
             className="flex-1 bg-background px-4 py-6 sm:px-6 lg:px-8"
           >
-            {ready ? children : null}
+            {error ? (
+              <div className="flex flex-col items-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
+                <AlertTriangle className="size-5" />
+                Не удалось загрузить данные: {error}
+              </div>
+            ) : ready ? (
+              children
+            ) : (
+              <div className="flex h-64 items-center justify-center text-muted-foreground">
+                <Loader2 className="size-6 animate-spin" />
+              </div>
+            )}
           </motion.main>
         </div>
       </div>

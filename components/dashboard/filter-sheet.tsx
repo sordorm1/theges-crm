@@ -19,8 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { DashboardFilters, Partner } from "@/lib/types";
-import { SUBJECT_LABELS } from "@/lib/data/programs";
+import type { DashboardFilters, Partner, SubjectRow } from "@/lib/types";
+import { subjectLabels } from "@/lib/data/programs";
 
 const EMPTY_FILTERS: DashboardFilters = {
   from: undefined,
@@ -32,15 +32,18 @@ const EMPTY_FILTERS: DashboardFilters = {
 
 export function FilterSheet({
   partners,
+  subjects,
   filters,
   onApply,
 }: {
   partners: Partner[];
+  subjects: SubjectRow[];
   filters: DashboardFilters;
   onApply: (filters: DashboardFilters) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DashboardFilters>(filters);
+  const labels = subjectLabels(subjects);
 
   const activeCount = Object.entries(filters).filter(
     ([, v]) => v && v !== "all",
@@ -130,14 +133,14 @@ export function FilterSheet({
               onValueChange={(v) =>
                 setDraft((d) => ({ ...d, subject: (v ?? "all") as DashboardFilters["subject"] }))
               }
-              items={{ all: "Все направления", ...SUBJECT_LABELS }}
+              items={{ all: "Все направления", ...labels }}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Все направления</SelectItem>
-                {Object.entries(SUBJECT_LABELS).map(([key, label]) => (
+                {Object.entries(labels).map(([key, label]) => (
                   <SelectItem key={key} value={key}>
                     {label}
                   </SelectItem>

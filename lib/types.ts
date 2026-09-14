@@ -1,7 +1,22 @@
-export type Subject = "english" | "spanish" | "arabic" | "math";
+export type Subject = string;
+
+export interface SubjectRow {
+  id: string;
+  key: string;
+  label: string;
+  sortOrder: number;
+}
+
+export interface SubjectLevel {
+  id: string;
+  subjectId: string;
+  label: string;
+  sortOrder: number;
+}
 
 export interface ExamProgram {
   id: string;
+  key: string;
   subject: Subject;
   name: string;
   shortName: string;
@@ -10,15 +25,27 @@ export interface ExamProgram {
 
 export type ExamStatus = "scheduled" | "passed" | "failed";
 
+export interface PaymentComment {
+  id: string;
+  examRecordId: string;
+  text: string;
+  createdAt: string; // ISO datetime (UTC)
+}
+
 export interface ExamRecord {
   id: string;
   examProgramId: string;
   date: string; // ISO date
   status: ExamStatus;
   score?: string;
+  levelLabel?: string;
   login: string;
   password: string;
   examKey: string;
+  registrationFeeUsd?: number;
+  examFeeUsd?: number;
+  consultationFeeUsd?: number;
+  paymentComments?: PaymentComment[];
 }
 
 export interface Partner {
@@ -37,6 +64,7 @@ export interface Student {
   lastName: string;
   passportNumber: string;
   phone: string;
+  email?: string;
   partnerId: string | null;
   createdAt: string; // ISO date
   examRecords: ExamRecord[];

@@ -22,8 +22,12 @@ function StudentsPageInner() {
   const partnerFromUrl = searchParams.get("partner") ?? "all";
 
   const [partnerFilter, setPartnerFilter] = useState(partnerFromUrl);
-  const [selected, setSelected] = useState<Student | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  // Re-derived from `students` on every render (instead of storing the
+  // Student object itself) so the detail dialog always reflects the latest
+  // data after a mutation (fee update, new exam, comment) refetches it.
+  const selected = selectedId ? (students.find((s) => s.id === selectedId) ?? null) : null;
 
   const filtered = useMemo(() => {
     const base =
@@ -36,7 +40,7 @@ function StudentsPageInner() {
   }, [students, partnerFilter]);
 
   function openStudent(s: Student) {
-    setSelected(s);
+    setSelectedId(s.id);
     setDetailOpen(true);
   }
 

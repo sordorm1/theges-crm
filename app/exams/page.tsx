@@ -3,12 +3,14 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Folder, Users } from "lucide-react";
+import { Folder, Users, Settings2 } from "lucide-react";
 import { useAppData } from "@/lib/data/store-context";
-import { EXAM_PROGRAMS, SUBJECT_LABELS } from "@/lib/data/programs";
+import { subjectLabels } from "@/lib/data/programs";
+import { Button } from "@/components/ui/button";
 
 export default function ExamsPage() {
-  const { students } = useAppData();
+  const { students, examPrograms, subjects } = useAppData();
+  const labels = useMemo(() => subjectLabels(subjects), [subjects]);
 
   const counts = useMemo(() => {
     const map = new Map<string, number>();
@@ -22,15 +24,21 @@ export default function ExamsPage() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold">Экзамены</h1>
-        <p className="text-sm text-muted-foreground">
-          Программы подготовки · {EXAM_PROGRAMS.length} направлений
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Экзамены</h1>
+          <p className="text-sm text-muted-foreground">
+            Программы подготовки · {examPrograms.length} направлений
+          </p>
+        </div>
+        <Button variant="outline" className="gap-2" render={<Link href="/settings" />}>
+          <Settings2 className="size-4" />
+          Добавить направление / экзамен
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {EXAM_PROGRAMS.map((program, i) => (
+        {examPrograms.map((program, i) => (
           <motion.div
             key={program.id}
             initial={{ opacity: 0, y: 10 }}
@@ -38,7 +46,7 @@ export default function ExamsPage() {
             transition={{ delay: i * 0.05, duration: 0.3 }}
           >
             <Link
-              href={`/exams/${program.id}`}
+              href={`/exams/${program.key}`}
               className="group flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
               <div className="flex items-center justify-between">
@@ -49,7 +57,7 @@ export default function ExamsPage() {
                   <Folder className="size-6" strokeWidth={2} />
                 </span>
                 <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-secondary-foreground">
-                  {SUBJECT_LABELS[program.subject]}
+                  {labels[program.subject] ?? program.subject}
                 </span>
               </div>
               <div>
@@ -64,6 +72,9 @@ export default function ExamsPage() {
             </Link>
           </motion.div>
         ))}
+        {examPrograms.length === 0 && (
+          <p className="text-sm text-muted-foreground">Пока нет программ экзаменов</p>
+        )}
       </div>
     </div>
   );

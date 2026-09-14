@@ -1,9 +1,10 @@
-import type { DashboardFilters, Partner, Student } from "@/lib/types";
-import { EXAM_PROGRAMS, getProgram } from "@/lib/data/programs";
+import type { DashboardFilters, ExamProgram, Partner, Student } from "@/lib/types";
+import { getProgram } from "@/lib/data/programs";
 
 export function applyFilters(
   students: Student[],
   filters: DashboardFilters,
+  programs: ExamProgram[],
 ): Student[] {
   const from = filters.from ? new Date(filters.from).getTime() : null;
   const to = filters.to ? new Date(filters.to).getTime() : null;
@@ -19,7 +20,7 @@ export function applyFilters(
 
     if (filters.subject && filters.subject !== "all") {
       const hasSubject = s.examRecords.some(
-        (r) => getProgram(r.examProgramId)?.subject === filters.subject,
+        (r) => getProgram(programs, r.examProgramId)?.subject === filters.subject,
       );
       if (!hasSubject) return false;
     }
@@ -81,17 +82,19 @@ export function partnerRanking(students: Student[], partners: Partner[]) {
     .sort((a, b) => b.count - a.count);
 }
 
-export function programPopularity(students: Student[]) {
+export function programPopularity(students: Student[], programs: ExamProgram[]) {
   const counts = new Map<string, number>();
   for (const s of students) {
     for (const r of s.examRecords) {
       counts.set(r.examProgramId, (counts.get(r.examProgramId) ?? 0) + 1);
     }
   }
-  return EXAM_PROGRAMS.map((p) => ({
-    program: p,
-    count: counts.get(p.id) ?? 0,
-  })).sort((a, b) => b.count - a.count);
+  return programs
+    .map((p) => ({
+      program: p,
+      count: counts.get(p.id) ?? 0,
+    }))
+    .sort((a, b) => b.count - a.count);
 }
 
 export function currentMonthCount(students: Student[]) {

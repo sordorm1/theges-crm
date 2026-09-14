@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Eye, EyeOff, Copy, IdCard, Phone, Building2 } from "lucide-react";
+import { Eye, EyeOff, Copy, IdCard, Phone, Mail, Building2, Plus, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +16,12 @@ import { useAppData } from "@/lib/data/store-context";
 import { fullName, formatDate } from "@/lib/format";
 import { getProgram } from "@/lib/data/programs";
 import { StatusBadge } from "@/components/status-badge";
+import { PaymentSection } from "@/components/students/payment-section";
+import {
+  ExamRecordForm,
+  EMPTY_EXAM_RECORD_DRAFT,
+  type ExamRecordDraft,
+} from "@/components/students/exam-record-form";
 
 function SecretField({ label, value }: { label: string; value: string }) {
   const [visible, setVisible] = useState(false);
@@ -48,7 +54,64 @@ function SecretField({ label, value }: { label: string; value: string }) {
         </div>
       </div>
       <div className="font-mono text-sm break-all select-all">
-        {visible ? value : "•".repeat(Math.min(value.length, 10))}
+        {visible ? value || "—" : "•".repeat(Math.min(value.length || 1, 10))}
+      </div>
+    </div>
+  );
+}
+
+function AddExamRecordBlock({ studentId }: { studentId: string }) {
+  const { addExamRecordToStudent } = useAppData();
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [exam, setExam] = useState<ExamRecordDraft>(EMPTY_EXAM_RECORD_DRAFT);
+
+  if (!open) {
+    return (
+      <Button variant="outline" className="w-full gap-2" onClick={() => setOpen(true)}>
+        <Plus className="size-4" />
+        Добавить экзамен
+      </Button>
+    );
+  }
+
+  async function handleSave() {
+    if (!exam.programId) {
+      toast.error("Выберите направление и экзамен");
+      return;
+    }
+    setSaving(true);
+    try {
+      await addExamRecordToStudent(studentId, {
+        examProgramId: exam.programId,
+        date: exam.date || new Date().toISOString(),
+        status: exam.status,
+        levelLabel: exam.levelLabel || undefined,
+        login: exam.login.trim(),
+        password: exam.password.trim(),
+        examKey: exam.examKey.trim(),
+      });
+      toast.success("Экзамен добавлен");
+      setExam(EMPTY_EXAM_RECORD_DRAFT);
+      setOpen(false);
+    } catch {
+      toast.error("Не удалось добавить экзамен");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <ExamRecordForm value={exam} onChange={setExam} />
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={() => setOpen(false)}>
+          Отмена
+        </Button>
+        <Button onClick={handleSave} disabled={saving}>
+          {saving && <Loader2 className="size-4 animate-spin" />}
+          Сохранить
+        </Button>
       </div>
     </div>
   );
@@ -63,7 +126,7 @@ export function StudentDetailSheet({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
-  const { partners } = useAppData();
+  const { partners, examPrograms } = useAppData();
   const partner = partners.find((p) => p.id === student?.partnerId);
 
   return (
@@ -85,7 +148,11 @@ export function StudentDetailSheet({
                   <Phone className="size-4 shrink-0 text-muted-foreground" />
                   <span>{student.phone || "—"}</span>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 sm:col-span-2">
+                <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
+                  <Mail className="size-4 shrink-0 text-muted-foreground" />
+                  <span>{student.email || "—"}</span>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
                   <Building2 className="size-4 shrink-0 text-muted-foreground" />
                   <span>{partner ? `${partner.name} · ${partner.code}` : "Без партнёра"}</span>
                 </div>
@@ -105,7 +172,7 @@ export function StudentDetailSheet({
                   </p>
                 )}
                 {student.examRecords.map((r) => {
-                  const program = getProgram(r.examProgramId);
+                  const program = getProgram(examPrograms, r.examProgramId);
                   return (
                     <div
                       key={r.id}
@@ -115,7 +182,9 @@ export function StudentDetailSheet({
                         <div>
                           <div className="text-sm font-semibold">{program?.name ?? r.examProgramId}</div>
                           <div className="text-xs text-muted-foreground">
-                            {formatDate(r.date)} {r.score ? `· балл: ${r.score}` : ""}
+                            {formatDate(r.date)}
+                            {r.score ? ` · балл: ${r.score}` : ""}
+                            {r.levelLabel ? ` · уровень: ${r.levelLabel}` : ""}
                           </div>
                         </div>
                         <StatusBadge status={r.status} />
@@ -125,9 +194,13 @@ export function StudentDetailSheet({
                         <SecretField label="Пароль" value={r.password} />
                         <SecretField label="Exam Key" value={r.examKey} />
                       </div>
+
+                      <PaymentSection examRecord={r} />
                     </div>
                   );
                 })}
+
+                <AddExamRecordBlock studentId={student.id} />
               </div>
             </div>
           </>

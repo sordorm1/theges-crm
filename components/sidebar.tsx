@@ -4,13 +4,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Building2, Users, GraduationCap } from "lucide-react";
+import { LayoutDashboard, Building2, Users, GraduationCap, Settings2 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Дашборд", icon: LayoutDashboard },
   { href: "/partners", label: "Партнёры", icon: Building2 },
   { href: "/students", label: "Ученики", icon: Users },
   { href: "/exams", label: "Экзамены", icon: GraduationCap },
+  { href: "/settings", label: "Настройки", icon: Settings2 },
 ];
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {

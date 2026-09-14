@@ -26,6 +26,7 @@ export function AddPartnerDialog() {
   const [code, setCode] = useState("");
   const [logo, setLogo] = useState<string | undefined>();
   const [compressing, setCompressing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [originalSize, setOriginalSize] = useState<number | null>(null);
   const [compressedSize, setCompressedSize] = useState<number | null>(null);
 
@@ -52,21 +53,28 @@ export function AddPartnerDialog() {
     }
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!name.trim()) {
       toast.error("Укажите название компании");
       return;
     }
     const finalCode = code.trim() || nextPartnerCode(name);
-    addPartner({
-      name: name.trim(),
-      phone: phone.trim(),
-      code: finalCode.toUpperCase(),
-      logoDataUrl: logo,
-    });
-    toast.success(`Партнёр «${name.trim()}» добавлен`);
-    reset();
-    setOpen(false);
+    setSaving(true);
+    try {
+      await addPartner({
+        name: name.trim(),
+        phone: phone.trim(),
+        code: finalCode.toUpperCase(),
+        logoDataUrl: logo,
+      });
+      toast.success(`Партнёр «${name.trim()}» добавлен`);
+      reset();
+      setOpen(false);
+    } catch {
+      toast.error("Не удалось сохранить партнёра");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -155,7 +163,10 @@ export function AddPartnerDialog() {
           <Button variant="outline" onClick={() => setOpen(false)}>
             Отмена
           </Button>
-          <Button onClick={handleSubmit}>Сохранить</Button>
+          <Button onClick={handleSubmit} disabled={saving}>
+            {saving && <Loader2 className="size-4 animate-spin" />}
+            Сохранить
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

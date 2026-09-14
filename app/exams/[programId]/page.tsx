@@ -5,10 +5,9 @@ import { useParams, notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useAppData } from "@/lib/data/store-context";
-import { getProgram } from "@/lib/data/programs";
 import { StudentsTable } from "@/components/students/students-table";
 import { StudentDetailSheet } from "@/components/students/student-detail-sheet";
-import type { ExamStatus, Student } from "@/lib/types";
+import type { ExamStatus } from "@/lib/types";
 import {
   Select,
   SelectContent,
@@ -21,15 +20,16 @@ import { Label } from "@/components/ui/label";
 
 export default function ExamProgramPage() {
   const params = useParams<{ programId: string }>();
-  const program = getProgram(params.programId);
-  const { students, partners } = useAppData();
+  const { students, partners, examPrograms } = useAppData();
+  const program = examPrograms.find((p) => p.key === params.programId);
 
   const [partnerFilter, setPartnerFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<ExamStatus | "all">("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [selected, setSelected] = useState<Student | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const selected = selectedId ? (students.find((s) => s.id === selectedId) ?? null) : null;
 
   const programStudents = useMemo(() => {
     if (!program) return [];
@@ -139,7 +139,7 @@ export default function ExamProgramPage() {
         partners={partners}
         programId={program.id}
         onOpen={(s) => {
-          setSelected(s);
+          setSelectedId(s.id);
           setDetailOpen(true);
         }}
       />
