@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Phone, Users } from "lucide-react";
+import { toast } from "sonner";
+import { Phone, Users, Trash2, Loader2 } from "lucide-react";
 import type { Partner } from "@/lib/types";
+import { useAppData } from "@/lib/data/store-context";
+import { Button } from "@/components/ui/button";
 
 export function PartnerCard({
   partner,
@@ -15,12 +19,41 @@ export function PartnerCard({
   studentCount: number;
   index: number;
 }) {
+  const { deletePartner } = useAppData();
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm(`Удалить партнёра «${partner.name}»? Ученики останутся, но без партнёра.`)) return;
+    setDeleting(true);
+    try {
+      await deletePartner(partner.id);
+      toast.success("Партнёр удалён");
+    } catch {
+      toast.error("Не удалось удалить партнёра");
+      setDeleting(false);
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index, 8) * 0.04, duration: 0.3 }}
+      className="relative"
     >
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute top-2 right-2 z-10 size-7 text-muted-foreground hover:text-destructive"
+        onClick={handleDelete}
+        disabled={deleting}
+        aria-label="Удалить партнёра"
+      >
+        {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+      </Button>
+
       <Link
         href={`/students?partner=${partner.id}`}
         className="group flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
@@ -47,7 +80,7 @@ export function PartnerCard({
         </div>
 
         <div>
-          <h3 className="line-clamp-1 text-sm font-semibold group-hover:text-primary">
+          <h3 className="line-clamp-1 pr-6 text-sm font-semibold group-hover:text-primary">
             {partner.name}
           </h3>
           {partner.phone && (

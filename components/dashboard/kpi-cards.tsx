@@ -16,14 +16,16 @@ export function KpiCards({
   total,
   thisMonth,
   topPartnerName,
+  topPartnerCount,
   topProgramName,
-  passRate,
+  topProgramCount,
 }: {
   total: number;
   thisMonth: number;
   topPartnerName: string;
+  topPartnerCount: number;
   topProgramName: string;
-  passRate: number;
+  topProgramCount: number;
 }) {
   const kpis: Kpi[] = [
     {
@@ -43,14 +45,14 @@ export function KpiCards({
     {
       label: "Топ-партнёр",
       value: topPartnerName || "—",
-      sub: "больше всего учеников",
+      sub: topPartnerName ? `${topPartnerCount} учеников привёл` : "нет данных",
       icon: Award,
       accent: "text-amber-600 bg-amber-50",
     },
     {
       label: "Популярный курс",
       value: topProgramName || "—",
-      sub: `${passRate}% успешной сдачи`,
+      sub: topProgramName ? `${topProgramCount} учеников` : "нет данных",
       icon: Target,
       accent: "text-violet-600 bg-violet-50",
     },

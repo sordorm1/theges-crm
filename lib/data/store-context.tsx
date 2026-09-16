@@ -16,13 +16,19 @@ import type {
   SubjectLevel,
   SubjectRow,
 } from "@/lib/types";
-import { listPartners, createPartner as createPartnerAction } from "@/lib/api/partners";
+import {
+  listPartners,
+  createPartner as createPartnerAction,
+  deletePartner as deletePartnerAction,
+} from "@/lib/api/partners";
 import {
   listStudents,
   createStudent as createStudentAction,
   addExamRecordToStudent as addExamRecordAction,
   updateStudentProfile as updateStudentProfileAction,
   updateExamRecord as updateExamRecordAction,
+  deleteStudent as deleteStudentAction,
+  deleteExamRecord as deleteExamRecordAction,
   type StudentProfileInput,
   type ExamRecordEditInput,
 } from "@/lib/api/students";
@@ -33,10 +39,14 @@ import {
   addSubjectLevel as addSubjectLevelAction,
   listExamPrograms,
   addExamProgram as addExamProgramAction,
+  deleteSubject as deleteSubjectAction,
+  deleteSubjectLevel as deleteSubjectLevelAction,
+  deleteExamProgram as deleteExamProgramAction,
 } from "@/lib/api/catalog";
 import {
   updateExamFee as updateExamFeeAction,
   addPaymentComment as addPaymentCommentAction,
+  deletePaymentComment as deletePaymentCommentAction,
   type FeeField,
   type UpdateFeeResult,
 } from "@/lib/api/payments";
@@ -58,19 +68,24 @@ interface AppDataContextValue {
     code: string;
     logoDataUrl?: string;
   }) => Promise<Partner>;
+  deletePartner: (partnerId: string) => Promise<void>;
   nextPartnerCode: (name: string) => string;
 
   addStudent: (student: Parameters<typeof createStudentAction>[0]) => Promise<Student>;
+  deleteStudent: (studentId: string) => Promise<void>;
   addExamRecordToStudent: (
     studentId: string,
     examRecord: Parameters<typeof addExamRecordAction>[1],
   ) => Promise<Student>;
+  deleteExamRecord: (examRecordId: string) => Promise<Student>;
   findStudentsByQuery: (query: string) => Student[];
   updateStudentProfile: (studentId: string, profile: StudentProfileInput) => Promise<Student>;
   updateExamRecord: (examRecordId: string, examRecord: ExamRecordEditInput) => Promise<Student>;
 
   addSubject: (key: string, label: string) => Promise<SubjectRow>;
+  deleteSubject: (subjectId: string) => Promise<void>;
   addSubjectLevel: (subjectId: string, label: string) => Promise<SubjectLevel>;
+  deleteSubjectLevel: (levelId: string) => Promise<void>;
   addExamProgram: (
     subjectId: string,
     key: string,
@@ -78,6 +93,7 @@ interface AppDataContextValue {
     shortName: string,
     color: string,
   ) => Promise<void>;
+  deleteExamProgram: (programId: string) => Promise<void>;
 
   updateExamFee: (
     examRecordId: string,
@@ -86,6 +102,7 @@ interface AppDataContextValue {
     pin?: string,
   ) => Promise<UpdateFeeResult>;
   addPaymentComment: (examRecordId: string, text: string) => Promise<PaymentComment>;
+  deletePaymentComment: (examRecordId: string, commentId: string) => Promise<void>;
 }
 
 const AppDataContext = createContext<AppDataContextValue | null>(null);
@@ -154,10 +171,23 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     return created;
   }, []);
 
+  const deletePartner = useCallback(async (partnerId: string) => {
+    await deletePartnerAction(partnerId);
+    setPartners((prev) => prev.filter((p) => p.id !== partnerId));
+    setStudents((prev) =>
+      prev.map((s) => (s.partnerId === partnerId ? { ...s, partnerId: null } : s)),
+    );
+  }, []);
+
   const addStudent = useCallback(async (input: Parameters<typeof createStudentAction>[0]) => {
     const created = await createStudentAction(input);
     setStudents((prev) => [created, ...prev]);
     return created;
+  }, []);
+
+  const deleteStudent = useCallback(async (studentId: string) => {
+    await deleteStudentAction(studentId);
+    setStudents((prev) => prev.filter((s) => s.id !== studentId));
   }, []);
 
   const addExamRecordToStudent = useCallback(
@@ -168,6 +198,12 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     },
     [],
   );
+
+  const deleteExamRecord = useCallback(async (examRecordId: string) => {
+    const updated = await deleteExamRecordAction(examRecordId);
+    setStudents((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+    return updated;
+  }, []);
 
   const updateStudentProfile = useCallback(
     async (studentId: string, profile: StudentProfileInput) => {
@@ -207,10 +243,21 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     return created;
   }, []);
 
+  const deleteSubject = useCallback(async (subjectId: string) => {
+    await deleteSubjectAction(subjectId);
+    setSubjects((prev) => prev.filter((s) => s.id !== subjectId));
+    setSubjectLevels((prev) => prev.filter((l) => l.subjectId !== subjectId));
+  }, []);
+
   const addSubjectLevel = useCallback(async (subjectId: string, label: string) => {
     const created = await addSubjectLevelAction(subjectId, label);
     setSubjectLevels((prev) => [...prev, created]);
     return created;
+  }, []);
+
+  const deleteSubjectLevel = useCallback(async (levelId: string) => {
+    await deleteSubjectLevelAction(levelId);
+    setSubjectLevels((prev) => prev.filter((l) => l.id !== levelId));
   }, []);
 
   const addExamProgram = useCallback(
@@ -221,6 +268,11 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     },
     [],
   );
+
+  const deleteExamProgram = useCallback(async (programId: string) => {
+    await deleteExamProgramAction(programId);
+    setExamPrograms((prev) => prev.filter((p) => p.id !== programId));
+  }, []);
 
   const updateExamFee = useCallback(
     async (examRecordId: string, field: FeeField, value: number, pin?: string) => {
@@ -246,6 +298,20 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     return comment;
   }, []);
 
+  const deletePaymentComment = useCallback(async (examRecordId: string, commentId: string) => {
+    await deletePaymentCommentAction(commentId);
+    setStudents((prev) =>
+      prev.map((s) => ({
+        ...s,
+        examRecords: s.examRecords.map((r) =>
+          r.id === examRecordId
+            ? { ...r, paymentComments: (r.paymentComments ?? []).filter((c) => c.id !== commentId) }
+            : r,
+        ),
+      })),
+    );
+  }, []);
+
   const value = useMemo<AppDataContextValue>(
     () => ({
       ready,
@@ -257,17 +323,24 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       examPrograms,
       refresh,
       addPartner,
+      deletePartner,
       nextPartnerCode,
       addStudent,
+      deleteStudent,
       addExamRecordToStudent,
+      deleteExamRecord,
       findStudentsByQuery,
       updateStudentProfile,
       updateExamRecord,
       addSubject,
+      deleteSubject,
       addSubjectLevel,
+      deleteSubjectLevel,
       addExamProgram,
+      deleteExamProgram,
       updateExamFee,
       addPaymentComment,
+      deletePaymentComment,
     }),
     [
       ready,
@@ -279,17 +352,24 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       examPrograms,
       refresh,
       addPartner,
+      deletePartner,
       nextPartnerCode,
       addStudent,
+      deleteStudent,
       addExamRecordToStudent,
+      deleteExamRecord,
       findStudentsByQuery,
       updateStudentProfile,
       updateExamRecord,
       addSubject,
+      deleteSubject,
       addSubjectLevel,
+      deleteSubjectLevel,
       addExamProgram,
+      deleteExamProgram,
       updateExamFee,
       addPaymentComment,
+      deletePaymentComment,
     ],
   );
 

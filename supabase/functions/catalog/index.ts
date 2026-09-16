@@ -2,13 +2,29 @@ import { jsonResponse, handleOptions } from "../_shared/cors.ts";
 import { supabaseAdmin } from "../_shared/supabase.ts";
 
 interface RequestBody {
-  action: "add-subject" | "add-level" | "add-program";
+  action:
+    | "add-subject"
+    | "add-level"
+    | "add-program"
+    | "delete-subject"
+    | "delete-level"
+    | "delete-program";
   key?: string;
   label?: string;
   subjectId?: string;
+  levelId?: string;
+  programId?: string;
   name?: string;
   shortName?: string;
   color?: string;
+}
+
+function friendlyDeleteError(e: unknown): string {
+  const message = e instanceof Error ? e.message : String(e);
+  if (message.includes("foreign key") || message.includes("violates foreign key constraint")) {
+    return "Нельзя удалить: есть связанные записи (программы или ученики). Сначала удалите их.";
+  }
+  return message;
 }
 
 Deno.serve(async (req) => {
@@ -61,6 +77,27 @@ Deno.serve(async (req) => {
         color: body.color ?? "#1e5fbf",
       });
       if (error) throw error;
+      return jsonResponse({ ok: true });
+    }
+
+    if (body.action === "delete-subject") {
+      if (!body.subjectId) return jsonResponse({ error: "subjectId is required" }, 400);
+      const { error } = await db.from("subjects").delete().eq("id", body.subjectId);
+      if (error) return jsonResponse({ error: friendlyDeleteError(error) }, 409);
+      return jsonResponse({ ok: true });
+    }
+
+    if (body.action === "delete-level") {
+      if (!body.levelId) return jsonResponse({ error: "levelId is required" }, 400);
+      const { error } = await db.from("subject_levels").delete().eq("id", body.levelId);
+      if (error) return jsonResponse({ error: friendlyDeleteError(error) }, 409);
+      return jsonResponse({ ok: true });
+    }
+
+    if (body.action === "delete-program") {
+      if (!body.programId) return jsonResponse({ error: "programId is required" }, 400);
+      const { error } = await db.from("exam_programs").delete().eq("id", body.programId);
+      if (error) return jsonResponse({ error: friendlyDeleteError(error) }, 409);
       return jsonResponse({ ok: true });
     }
 

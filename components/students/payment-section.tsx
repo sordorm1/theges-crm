@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Pencil, Check, X, MessageSquare } from "lucide-react";
+import { Pencil, Check, X, MessageSquare, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +17,41 @@ const FEE_FIELDS: { field: FeeField; label: string }[] = [
   { field: "examFeeUsd", label: "Экзамен" },
   { field: "consultationFeeUsd", label: "Консультация" },
 ];
+
+function CommentDeleteButton({
+  examRecordId,
+  commentId,
+}: {
+  examRecordId: string;
+  commentId: string;
+}) {
+  const { deletePaymentComment } = useAppData();
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!confirm("Удалить комментарий?")) return;
+    setDeleting(true);
+    try {
+      await deletePaymentComment(examRecordId, commentId);
+    } catch {
+      toast.error("Не удалось удалить комментарий");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="size-6 shrink-0 text-muted-foreground hover:text-destructive"
+      onClick={handleDelete}
+      disabled={deleting}
+    >
+      {deleting ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
+    </Button>
+  );
+}
 
 function FeeRow({ examRecord, field, label }: { examRecord: ExamRecord; field: FeeField; label: string }) {
   const { updateExamFee } = useAppData();
@@ -173,11 +208,14 @@ export function PaymentSection({ examRecord }: { examRecord: ExamRecord }) {
         </div>
         <div className="flex flex-col gap-1.5">
           {(examRecord.paymentComments ?? []).map((c) => (
-            <div key={c.id} className="rounded-lg bg-muted px-3 py-2 text-sm">
-              <div className="break-words">{c.text}</div>
-              <div className="mt-1 text-[11px] text-muted-foreground">
-                {formatTashkentDateTime(c.createdAt)} (Ташкент)
+            <div key={c.id} className="flex items-start justify-between gap-2 rounded-lg bg-muted px-3 py-2 text-sm">
+              <div className="min-w-0">
+                <div className="break-words">{c.text}</div>
+                <div className="mt-1 text-[11px] text-muted-foreground">
+                  {formatTashkentDateTime(c.createdAt)} (Ташкент)
+                </div>
               </div>
+              <CommentDeleteButton examRecordId={examRecord.id} commentId={c.id} />
             </div>
           ))}
           {(examRecord.paymentComments ?? []).length === 0 && (

@@ -45,3 +45,13 @@ export async function createPartner(input: {
   if (!res.ok) throw new Error(data.error ?? "Failed to create partner");
   return data as Partner;
 }
+
+export async function deletePartner(partnerId: string): Promise<void> {
+  const res = await fetch(`${EDGE_FUNCTIONS_URL}/partners`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "delete", partnerId }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Failed to delete partner");
+}

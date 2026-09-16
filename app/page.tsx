@@ -9,7 +9,6 @@ import {
   monthlyEnrollment,
   partnerRanking,
   programPopularity,
-  passRate as computePassRate,
 } from "@/lib/stats";
 import { KpiCards } from "@/components/dashboard/kpi-cards";
 import { MonthlyChart } from "@/components/dashboard/monthly-chart";
@@ -40,7 +39,6 @@ export default function DashboardPage() {
     [filtered, examPrograms],
   );
   const thisMonth = useMemo(() => currentMonthCount(filtered), [filtered]);
-  const rate = useMemo(() => computePassRate(filtered), [filtered]);
   const recent = useMemo(() => filtered.slice(0, 6), [filtered]);
 
   const topPartner = ranking[0];
@@ -67,8 +65,9 @@ export default function DashboardPage() {
         total={filtered.length}
         thisMonth={thisMonth}
         topPartnerName={topPartner?.count ? topPartner.partner.name : "—"}
+        topPartnerCount={topPartner?.count ?? 0}
         topProgramName={topProgram?.count ? topProgram.program.shortName : "—"}
-        passRate={rate}
+        topProgramCount={topProgram?.count ?? 0}
       />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">

@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <AnimatePresence>{showSplash && <SplashScreen />}</AnimatePresence>
 
       <div className="flex min-h-screen w-full">
-        <aside className="hidden w-64 shrink-0 border-r border-sidebar-border lg:block">
+        <aside className="hidden w-48 shrink-0 border-r border-sidebar-border lg:block">
           <div className="sticky top-0 h-screen">
             <Sidebar />
           </div>

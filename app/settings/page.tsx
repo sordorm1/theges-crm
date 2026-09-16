@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, X } from "lucide-react";
 import { useAppData } from "@/lib/data/store-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +24,10 @@ function slugify(label: string) {
 }
 
 function SubjectsCard() {
-  const { subjects, addSubject } = useAppData();
+  const { subjects, addSubject, deleteSubject } = useAppData();
   const [label, setLabel] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function handleAdd() {
     if (!label.trim()) return;
@@ -42,14 +43,36 @@ function SubjectsCard() {
     }
   }
 
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Удалить направление «${name}»? Уровни этого направления тоже удалятся.`)) return;
+    setDeletingId(id);
+    try {
+      await deleteSubject(id);
+      toast.success("Направление удалено");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось удалить направление");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <h3 className="text-sm font-semibold">Направления</h3>
       <p className="mt-1 text-xs text-muted-foreground">Английский, Испанский, Арабский, Математика...</p>
       <div className="mt-4 flex flex-col gap-1.5">
         {subjects.map((s) => (
-          <div key={s.id} className="rounded-lg bg-muted px-3 py-2 text-sm">
+          <div key={s.id} className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2 text-sm">
             {s.label}
+            <button
+              type="button"
+              onClick={() => handleDelete(s.id, s.label)}
+              disabled={deletingId === s.id}
+              className="text-muted-foreground hover:text-destructive"
+              aria-label={`Удалить ${s.label}`}
+            >
+              {deletingId === s.id ? <Loader2 className="size-3.5 animate-spin" /> : <X className="size-3.5" />}
+            </button>
           </div>
         ))}
       </div>
@@ -69,10 +92,11 @@ function SubjectsCard() {
 }
 
 function LevelsCard() {
-  const { subjects, subjectLevels, addSubjectLevel } = useAppData();
+  const { subjects, subjectLevels, addSubjectLevel, deleteSubjectLevel } = useAppData();
   const [subjectId, setSubjectId] = useState("");
   const [label, setLabel] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const labels = Object.fromEntries(subjects.map((s) => [s.id, s.label]));
 
   async function handleAdd() {
@@ -89,6 +113,19 @@ function LevelsCard() {
     }
   }
 
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Удалить уровень «${name}»?`)) return;
+    setDeletingId(id);
+    try {
+      await deleteSubjectLevel(id);
+      toast.success("Уровень удалён");
+    } catch {
+      toast.error("Не удалось удалить уровень");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <h3 className="text-sm font-semibold">Уровни по направлениям</h3>
@@ -102,8 +139,24 @@ function LevelsCard() {
               <div className="text-xs font-medium text-muted-foreground">{s.label}</div>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {levels.map((l) => (
-                  <span key={l.id} className="rounded-full bg-muted px-2.5 py-1 text-xs">
+                  <span
+                    key={l.id}
+                    className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs"
+                  >
                     {l.label}
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(l.id, l.label)}
+                      disabled={deletingId === l.id}
+                      className="text-muted-foreground hover:text-destructive"
+                      aria-label={`Удалить уровень ${l.label}`}
+                    >
+                      {deletingId === l.id ? (
+                        <Loader2 className="size-3 animate-spin" />
+                      ) : (
+                        <X className="size-3" />
+                      )}
+                    </button>
                   </span>
                 ))}
               </div>
@@ -139,11 +192,12 @@ function LevelsCard() {
 }
 
 function ExamProgramsCard() {
-  const { subjects, examPrograms, addExamProgram } = useAppData();
+  const { subjects, examPrograms, addExamProgram, deleteExamProgram } = useAppData();
   const [subjectId, setSubjectId] = useState("");
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const labels = Object.fromEntries(subjects.map((s) => [s.id, s.label]));
 
   async function handleAdd() {
@@ -161,6 +215,19 @@ function ExamProgramsCard() {
     }
   }
 
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Удалить программу «${name}»?`)) return;
+    setDeletingId(id);
+    try {
+      await deleteExamProgram(id);
+      toast.success("Программа удалена");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Не удалось удалить программу");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <h3 className="text-sm font-semibold">Программы экзаменов</h3>
@@ -174,8 +241,24 @@ function ExamProgramsCard() {
               <div className="text-xs font-medium text-muted-foreground">{s.label}</div>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {programs.map((p) => (
-                  <span key={p.id} className="rounded-full bg-muted px-2.5 py-1 text-xs">
+                  <span
+                    key={p.id}
+                    className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs"
+                  >
                     {p.name}
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(p.id, p.name)}
+                      disabled={deletingId === p.id}
+                      className="text-muted-foreground hover:text-destructive"
+                      aria-label={`Удалить программу ${p.name}`}
+                    >
+                      {deletingId === p.id ? (
+                        <Loader2 className="size-3 animate-spin" />
+                      ) : (
+                        <X className="size-3" />
+                      )}
+                    </button>
                   </span>
                 ))}
               </div>

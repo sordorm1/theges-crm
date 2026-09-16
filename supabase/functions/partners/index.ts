@@ -1,11 +1,13 @@
 import { jsonResponse, handleOptions } from "../_shared/cors.ts";
 import { supabaseAdmin } from "../_shared/supabase.ts";
 
-interface CreatePartnerBody {
-  code: string;
-  name: string;
-  phone: string;
+interface RequestBody {
+  action?: "create" | "delete";
+  code?: string;
+  name?: string;
+  phone?: string;
   logoDataUrl?: string;
+  partnerId?: string;
 }
 
 async function uploadLogo(db: ReturnType<typeof supabaseAdmin>, dataUrl: string, code: string) {
@@ -31,10 +33,18 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
   try {
-    const body = (await req.json()) as CreatePartnerBody;
+    const body = (await req.json()) as RequestBody;
+    const db = supabaseAdmin();
+
+    if (body.action === "delete") {
+      if (!body.partnerId) return jsonResponse({ error: "partnerId is required" }, 400);
+      const { error } = await db.from("partners").delete().eq("id", body.partnerId);
+      if (error) throw error;
+      return jsonResponse({ ok: true });
+    }
+
     if (!body.name || !body.code) return jsonResponse({ error: "name and code are required" }, 400);
 
-    const db = supabaseAdmin();
     const logoUrl = body.logoDataUrl ? await uploadLogo(db, body.logoDataUrl, body.code) : null;
 
     const { data, error } = await db

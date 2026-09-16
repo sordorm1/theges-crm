@@ -20,7 +20,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex items-center gap-3 px-5 py-6">
+      <div className="flex items-center gap-2.5 px-4 py-5">
         <div className="rounded-xl bg-white p-1.5 shadow-sm">
           <Image src={`${BASE_PATH}/logo.png`} alt="the GES" width={30} height={30} />
         </div>
@@ -32,7 +32,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-2">
+      <nav className="flex-1 space-y-1 px-2.5 py-2">
         {NAV_ITEMS.map((item) => {
           const active =
             item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);

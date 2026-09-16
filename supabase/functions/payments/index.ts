@@ -10,12 +10,13 @@ const FIELD_TO_COLUMN: Record<FeeField, string> = {
 };
 
 interface RequestBody {
-  action: "update-fee" | "add-comment";
+  action: "update-fee" | "add-comment" | "delete-comment";
   examRecordId?: string;
   field?: FeeField;
   value?: number;
   pin?: string;
   text?: string;
+  commentId?: string;
 }
 
 Deno.serve(async (req) => {
@@ -71,6 +72,13 @@ Deno.serve(async (req) => {
         text: data.text,
         createdAt: data.created_at,
       });
+    }
+
+    if (body.action === "delete-comment") {
+      if (!body.commentId) return jsonResponse({ error: "commentId is required" }, 400);
+      const { error } = await db.from("payment_comments").delete().eq("id", body.commentId);
+      if (error) throw error;
+      return jsonResponse({ ok: true });
     }
 
     return jsonResponse({ error: "Unknown action" }, 400);

@@ -15,6 +15,7 @@ import {
   Pencil,
   Check,
   X,
+  Trash2,
 } from "lucide-react";
 import {
   Dialog,
@@ -82,11 +83,30 @@ function SecretField({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ProfileSection({ student }: { student: Student }) {
-  const { partners, updateStudentProfile } = useAppData();
+function ProfileSection({ student, onDeleted }: { student: Student; onDeleted: () => void }) {
+  const { partners, updateStudentProfile, deleteStudent } = useAppData();
   const partner = partners.find((p) => p.id === student.partnerId);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (
+      !confirm(
+        `Удалить ученика «${fullName(student)}»? Это удалит все его экзамены, логины и историю оплат. Действие необратимо.`,
+      )
+    )
+      return;
+    setDeleting(true);
+    try {
+      await deleteStudent(student.id);
+      toast.success("Ученик удалён");
+      onDeleted();
+    } catch {
+      toast.error("Не удалось удалить ученика");
+      setDeleting(false);
+    }
+  }
 
   const [firstName, setFirstName] = useState(student.firstName);
   const [middleName, setMiddleName] = useState(student.middleName ?? "");
@@ -219,19 +239,32 @@ function ProfileSection({ student }: { student: Student }) {
           <span>{partner ? `${partner.name} · ${partner.code}` : "Без партнёра"}</span>
         </div>
       </div>
-      <Button variant="ghost" size="sm" className="w-fit gap-1.5 text-muted-foreground" onClick={startEdit}>
-        <Pencil className="size-3.5" />
-        Редактировать данные ученика
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="ghost" size="sm" className="w-fit gap-1.5 text-muted-foreground" onClick={startEdit}>
+          <Pencil className="size-3.5" />
+          Редактировать данные ученика
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-fit gap-1.5 text-destructive hover:text-destructive"
+          onClick={handleDelete}
+          disabled={deleting}
+        >
+          {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+          Удалить ученика
+        </Button>
+      </div>
     </div>
   );
 }
 
 function ExamRecordCard({ record }: { record: ExamRecord }) {
-  const { examPrograms, updateExamRecord } = useAppData();
+  const { examPrograms, updateExamRecord, deleteExamRecord } = useAppData();
   const program = getProgram(examPrograms, record.examProgramId);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [date, setDate] = useState(record.date?.slice(0, 10) ?? "");
   const [status, setStatus] = useState<ExamStatus>(record.status);
   const [levelLabel, setLevelLabel] = useState(record.levelLabel ?? "");
@@ -269,6 +302,18 @@ function ExamRecordCard({ record }: { record: ExamRecord }) {
     }
   }
 
+  async function handleDelete() {
+    if (!confirm(`Удалить экзамен «${program?.name ?? "программа"}»? Действие необратимо.`)) return;
+    setDeleting(true);
+    try {
+      await deleteExamRecord(record.id);
+      toast.success("Экзамен удалён");
+    } catch {
+      toast.error("Не удалось удалить экзамен");
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border p-4">
       <div className="flex items-center justify-between gap-2">
@@ -285,9 +330,20 @@ function ExamRecordCard({ record }: { record: ExamRecord }) {
         <div className="flex shrink-0 items-center gap-2">
           {!editing && <StatusBadge status={record.status} />}
           {!editing && (
-            <Button variant="ghost" size="icon" className="size-7" onClick={startEdit}>
-              <Pencil className="size-3.5" />
-            </Button>
+            <>
+              <Button variant="ghost" size="icon" className="size-7" onClick={startEdit}>
+                <Pencil className="size-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 text-destructive hover:text-destructive"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -438,7 +494,7 @@ export function StudentDetailSheet({
             </DialogHeader>
 
             <div className="flex flex-col gap-5">
-              <ProfileSection student={student} />
+              <ProfileSection student={student} onDeleted={() => onOpenChange(false)} />
 
               <div className="text-xs text-muted-foreground">
                 Зарегистрирован: {formatDate(student.createdAt)}

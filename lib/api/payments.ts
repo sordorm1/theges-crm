@@ -33,3 +33,13 @@ export async function addPaymentComment(
   if (!res.ok) throw new Error(data.error ?? "Failed to add comment");
   return data as PaymentComment;
 }
+
+export async function deletePaymentComment(commentId: string): Promise<void> {
+  const res = await fetch(`${EDGE_FUNCTIONS_URL}/payments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "delete-comment", commentId }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Failed to delete comment");
+}

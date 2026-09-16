@@ -80,7 +80,13 @@ interface ExamRecordEditInput {
 }
 
 interface RequestBody {
-  action: "create" | "add-exam" | "update-profile" | "update-exam";
+  action:
+    | "create"
+    | "add-exam"
+    | "update-profile"
+    | "update-exam"
+    | "delete-student"
+    | "delete-exam";
   student?: StudentProfileInput & { examRecord?: ExamRecordInput };
   studentId?: string;
   examRecord?: ExamRecordInput;
@@ -217,6 +223,34 @@ Deno.serve(async (req) => {
         .eq("id", body.examRecordId)
         .select("student_id")
         .single();
+      if (error) throw error;
+
+      const { data: full, error: fetchError } = await db
+        .from("students")
+        .select(STUDENT_SELECT)
+        .eq("id", record.student_id)
+        .single();
+      if (fetchError) throw fetchError;
+      return jsonResponse(mapStudent(full));
+    }
+
+    if (body.action === "delete-student") {
+      if (!body.studentId) return jsonResponse({ error: "studentId is required" }, 400);
+      const { error } = await db.from("students").delete().eq("id", body.studentId);
+      if (error) throw error;
+      return jsonResponse({ ok: true, studentId: body.studentId });
+    }
+
+    if (body.action === "delete-exam") {
+      if (!body.examRecordId) return jsonResponse({ error: "examRecordId is required" }, 400);
+      const { data: record, error: fetchStudentError } = await db
+        .from("exam_records")
+        .select("student_id")
+        .eq("id", body.examRecordId)
+        .single();
+      if (fetchStudentError) throw fetchStudentError;
+
+      const { error } = await db.from("exam_records").delete().eq("id", body.examRecordId);
       if (error) throw error;
 
       const { data: full, error: fetchError } = await db

@@ -170,3 +170,17 @@ export async function updateExamRecord(
 ): Promise<Student> {
   return callStudentsFunction({ action: "update-exam", examRecordId, examRecordEdit: examRecord });
 }
+
+export async function deleteStudent(studentId: string): Promise<void> {
+  const res = await fetch(`${EDGE_FUNCTIONS_URL}/students`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "delete-student", studentId }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Failed to delete student");
+}
+
+export async function deleteExamRecord(examRecordId: string): Promise<Student> {
+  return callStudentsFunction({ action: "delete-exam", examRecordId });
+}

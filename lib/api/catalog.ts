@@ -73,3 +73,15 @@ export async function addExamProgram(
 ): Promise<void> {
   await callCatalogFunction({ action: "add-program", subjectId, key, name, shortName, color });
 }
+
+export async function deleteSubject(subjectId: string): Promise<void> {
+  await callCatalogFunction({ action: "delete-subject", subjectId });
+}
+
+export async function deleteSubjectLevel(levelId: string): Promise<void> {
+  await callCatalogFunction({ action: "delete-level", levelId });
+}
+
+export async function deleteExamProgram(programId: string): Promise<void> {
+  await callCatalogFunction({ action: "delete-program", programId });
+}
