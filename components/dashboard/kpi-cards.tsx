@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Users, TrendingUp, Award, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { pluralizeStudents } from "@/lib/format";
 
 interface Kpi {
   label: string;
@@ -45,14 +46,14 @@ export function KpiCards({
     {
       label: "Топ-партнёр",
       value: topPartnerName || "—",
-      sub: topPartnerName ? `${topPartnerCount} учеников привёл` : "нет данных",
+      sub: topPartnerName ? `${pluralizeStudents(topPartnerCount)} привёл` : "нет данных",
       icon: Award,
       accent: "text-amber-600 bg-amber-50",
     },
     {
       label: "Популярный курс",
       value: topProgramName || "—",
-      sub: topProgramName ? `${topProgramCount} учеников` : "нет данных",
+      sub: topProgramName ? pluralizeStudents(topProgramCount) : "нет данных",
       icon: Target,
       accent: "text-violet-600 bg-violet-50",
     },
