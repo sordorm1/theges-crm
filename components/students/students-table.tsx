@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { toast } from "sonner";
+import { Trash2, Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -8,11 +11,48 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import type { Student, Partner } from "@/lib/types";
 import { fullName, formatDate } from "@/lib/format";
 import { getProgram } from "@/lib/data/programs";
 import { useAppData } from "@/lib/data/store-context";
 import { StatusBadge } from "@/components/status-badge";
+
+function DeleteStudentButton({ student }: { student: Student }) {
+  const { deleteStudent } = useAppData();
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (
+      !confirm(
+        `Удалить ученика «${fullName(student)}»? Это удалит все его экзамены, логины и историю оплат.`,
+      )
+    )
+      return;
+    setDeleting(true);
+    try {
+      await deleteStudent(student.id);
+      toast.success("Ученик удалён");
+    } catch {
+      toast.error("Не удалось удалить ученика");
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="size-7 text-muted-foreground hover:text-destructive"
+      onClick={handleDelete}
+      disabled={deleting}
+      aria-label="Удалить ученика"
+    >
+      {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+    </Button>
+  );
+}
 
 export function StudentsTable({
   students,
@@ -39,6 +79,7 @@ export function StudentsTable({
               <TableHead>Программа</TableHead>
               <TableHead>Дата регистрации</TableHead>
               <TableHead>Статус</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -70,6 +111,9 @@ export function StudentsTable({
                   <TableCell>{formatDate(s.createdAt)}</TableCell>
                   <TableCell>
                     {lastExam ? <StatusBadge status={lastExam.status} /> : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <DeleteStudentButton student={s} />
                   </TableCell>
                 </TableRow>
               );
