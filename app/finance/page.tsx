@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Wallet, TrendingUp, PiggyBank, Hourglass, Trash2, Loader2, ChevronDown, ChevronRight } from "lucide-react";
+import { Wallet, TrendingUp, Coins, Hourglass, Trash2, Loader2, ChevronDown, ChevronRight } from "lucide-react";
 import { useAppData } from "@/lib/data/store-context";
 import { AddDepositDialog } from "@/components/finance/add-deposit-dialog";
 import { Button } from "@/components/ui/button";
@@ -241,7 +241,7 @@ export default function FinancePage() {
           accent="text-blue-600 bg-blue-50"
         />
         <StatCard
-          icon={PiggyBank}
+          icon={Coins}
           label="Остаток на депозитах"
           value={formatUsd(totals.balance)}
           sub="ещё не списано"
