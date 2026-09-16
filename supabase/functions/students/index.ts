@@ -1,5 +1,6 @@
 import { jsonResponse, handleOptions } from "../_shared/cors.ts";
 import { supabaseAdmin } from "../_shared/supabase.ts";
+import { reconcileExamRecordFinance } from "../_shared/finance.ts";
 
 const STUDENT_SELECT = `
   id, first_name, middle_name, last_name, passport_number, phone, email, partner_id, created_at,
@@ -124,20 +125,25 @@ Deno.serve(async (req) => {
       if (error) throw error;
 
       if (input.examRecord) {
-        const { error: examError } = await db.from("exam_records").insert({
-          student_id: student.id,
-          exam_program_id: input.examRecord.examProgramId,
-          date: input.examRecord.date,
-          status: input.examRecord.status,
-          level_label: input.examRecord.levelLabel ?? null,
-          login: input.examRecord.login,
-          password: input.examRecord.password,
-          exam_key: input.examRecord.examKey,
-          registration_fee_usd: input.examRecord.registrationFeeUsd ?? null,
-          exam_fee_usd: input.examRecord.examFeeUsd ?? null,
-          consultation_fee_usd: input.examRecord.consultationFeeUsd ?? null,
-        });
+        const { data: newExam, error: examError } = await db
+          .from("exam_records")
+          .insert({
+            student_id: student.id,
+            exam_program_id: input.examRecord.examProgramId,
+            date: input.examRecord.date,
+            status: input.examRecord.status,
+            level_label: input.examRecord.levelLabel ?? null,
+            login: input.examRecord.login,
+            password: input.examRecord.password,
+            exam_key: input.examRecord.examKey,
+            registration_fee_usd: input.examRecord.registrationFeeUsd ?? null,
+            exam_fee_usd: input.examRecord.examFeeUsd ?? null,
+            consultation_fee_usd: input.examRecord.consultationFeeUsd ?? null,
+          })
+          .select("id")
+          .single();
         if (examError) throw examError;
+        await reconcileExamRecordFinance(db, newExam.id);
       }
 
       const { data: full, error: fetchError } = await db
@@ -153,20 +159,25 @@ Deno.serve(async (req) => {
       if (!body.studentId || !body.examRecord) {
         return jsonResponse({ error: "studentId and examRecord are required" }, 400);
       }
-      const { error } = await db.from("exam_records").insert({
-        student_id: body.studentId,
-        exam_program_id: body.examRecord.examProgramId,
-        date: body.examRecord.date,
-        status: body.examRecord.status,
-        level_label: body.examRecord.levelLabel ?? null,
-        login: body.examRecord.login,
-        password: body.examRecord.password,
-        exam_key: body.examRecord.examKey,
-        registration_fee_usd: body.examRecord.registrationFeeUsd ?? null,
-        exam_fee_usd: body.examRecord.examFeeUsd ?? null,
-        consultation_fee_usd: body.examRecord.consultationFeeUsd ?? null,
-      });
+      const { data: newExam, error } = await db
+        .from("exam_records")
+        .insert({
+          student_id: body.studentId,
+          exam_program_id: body.examRecord.examProgramId,
+          date: body.examRecord.date,
+          status: body.examRecord.status,
+          level_label: body.examRecord.levelLabel ?? null,
+          login: body.examRecord.login,
+          password: body.examRecord.password,
+          exam_key: body.examRecord.examKey,
+          registration_fee_usd: body.examRecord.registrationFeeUsd ?? null,
+          exam_fee_usd: body.examRecord.examFeeUsd ?? null,
+          consultation_fee_usd: body.examRecord.consultationFeeUsd ?? null,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
+      await reconcileExamRecordFinance(db, newExam.id);
 
       const { data: full, error: fetchError } = await db
         .from("students")
@@ -196,6 +207,15 @@ Deno.serve(async (req) => {
         .eq("id", body.studentId);
       if (error) throw error;
 
+      // Partner may have changed - move/clear every exam record's ledger entries.
+      const { data: examIds } = await db
+        .from("exam_records")
+        .select("id")
+        .eq("student_id", body.studentId);
+      for (const { id } of examIds ?? []) {
+        await reconcileExamRecordFinance(db, id);
+      }
+
       const { data: full, error: fetchError } = await db
         .from("students")
         .select(STUDENT_SELECT)
@@ -224,6 +244,7 @@ Deno.serve(async (req) => {
         .select("student_id")
         .single();
       if (error) throw error;
+      await reconcileExamRecordFinance(db, body.examRecordId);
 
       const { data: full, error: fetchError } = await db
         .from("students")

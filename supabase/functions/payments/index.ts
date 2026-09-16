@@ -1,5 +1,6 @@
 import { jsonResponse, handleOptions } from "../_shared/cors.ts";
 import { supabaseAdmin } from "../_shared/supabase.ts";
+import { reconcileExamRecordFinance } from "../_shared/finance.ts";
 
 type FeeField = "registrationFeeUsd" | "examFeeUsd" | "consultationFeeUsd";
 
@@ -53,6 +54,7 @@ Deno.serve(async (req) => {
 
       const { error } = await db.from("exam_records").update({ [column]: value }).eq("id", examRecordId);
       if (error) throw error;
+      await reconcileExamRecordFinance(db, examRecordId);
       return jsonResponse({ ok: true });
     }
 

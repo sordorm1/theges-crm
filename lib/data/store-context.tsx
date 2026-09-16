@@ -10,6 +10,7 @@ import {
 } from "react";
 import type {
   ExamProgram,
+  FinanceTransaction,
   Partner,
   PaymentComment,
   Student,
@@ -50,6 +51,11 @@ import {
   type FeeField,
   type UpdateFeeResult,
 } from "@/lib/api/payments";
+import {
+  listFinanceTransactions,
+  addDeposit as addDepositAction,
+  deleteFinanceTransaction as deleteFinanceTransactionAction,
+} from "@/lib/api/finance";
 import { normalizeForSearch } from "@/lib/normalize";
 
 interface AppDataContextValue {
@@ -60,6 +66,7 @@ interface AppDataContextValue {
   subjects: SubjectRow[];
   subjectLevels: SubjectLevel[];
   examPrograms: ExamProgram[];
+  financeTransactions: FinanceTransaction[];
   refresh: () => Promise<void>;
 
   addPartner: (partner: {
@@ -103,6 +110,9 @@ interface AppDataContextValue {
   ) => Promise<UpdateFeeResult>;
   addPaymentComment: (examRecordId: string, text: string) => Promise<PaymentComment>;
   deletePaymentComment: (examRecordId: string, commentId: string) => Promise<void>;
+
+  addDeposit: (partnerId: string, amount: number, note?: string) => Promise<FinanceTransaction>;
+  deleteFinanceTransaction: (transactionId: string) => Promise<void>;
 }
 
 const AppDataContext = createContext<AppDataContextValue | null>(null);
@@ -115,20 +125,31 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [subjects, setSubjects] = useState<SubjectRow[]>([]);
   const [subjectLevels, setSubjectLevels] = useState<SubjectLevel[]>([]);
   const [examPrograms, setExamPrograms] = useState<ExamProgram[]>([]);
+  const [financeTransactions, setFinanceTransactions] = useState<FinanceTransaction[]>([]);
 
   const refresh = useCallback(async () => {
-    const [p, s, subj, lvls, progs] = await Promise.all([
+    const [p, s, subj, lvls, progs, tx] = await Promise.all([
       listPartners(),
       listStudents(),
       listSubjects(),
       listSubjectLevels(),
       listExamPrograms(),
+      listFinanceTransactions(),
     ]);
     setPartners(p);
     setStudents(s);
     setSubjects(subj);
     setSubjectLevels(lvls);
     setExamPrograms(progs);
+    setFinanceTransactions(tx);
+  }, []);
+
+  // Many mutations (adding/editing a student or exam record) change the
+  // server-side finance ledger as a side effect (see supabase/functions/
+  // _shared/finance.ts). Rather than duplicate that logic on the client,
+  // just refetch the ledger after anything that could have touched it.
+  const refreshFinance = useCallback(async () => {
+    setFinanceTransactions(await listFinanceTransactions());
   }, []);
 
   useEffect(() => {
@@ -177,50 +198,66 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     setStudents((prev) =>
       prev.map((s) => (s.partnerId === partnerId ? { ...s, partnerId: null } : s)),
     );
-  }, []);
+    await refreshFinance();
+  }, [refreshFinance]);
 
-  const addStudent = useCallback(async (input: Parameters<typeof createStudentAction>[0]) => {
-    const created = await createStudentAction(input);
-    setStudents((prev) => [created, ...prev]);
-    return created;
-  }, []);
+  const addStudent = useCallback(
+    async (input: Parameters<typeof createStudentAction>[0]) => {
+      const created = await createStudentAction(input);
+      setStudents((prev) => [created, ...prev]);
+      await refreshFinance();
+      return created;
+    },
+    [refreshFinance],
+  );
 
-  const deleteStudent = useCallback(async (studentId: string) => {
-    await deleteStudentAction(studentId);
-    setStudents((prev) => prev.filter((s) => s.id !== studentId));
-  }, []);
+  const deleteStudent = useCallback(
+    async (studentId: string) => {
+      await deleteStudentAction(studentId);
+      setStudents((prev) => prev.filter((s) => s.id !== studentId));
+      await refreshFinance();
+    },
+    [refreshFinance],
+  );
 
   const addExamRecordToStudent = useCallback(
     async (studentId: string, examRecord: Parameters<typeof addExamRecordAction>[1]) => {
       const updated = await addExamRecordAction(studentId, examRecord);
       setStudents((prev) => prev.map((s) => (s.id === studentId ? updated : s)));
+      await refreshFinance();
       return updated;
     },
-    [],
+    [refreshFinance],
   );
 
-  const deleteExamRecord = useCallback(async (examRecordId: string) => {
-    const updated = await deleteExamRecordAction(examRecordId);
-    setStudents((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
-    return updated;
-  }, []);
+  const deleteExamRecord = useCallback(
+    async (examRecordId: string) => {
+      const updated = await deleteExamRecordAction(examRecordId);
+      setStudents((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+      await refreshFinance();
+      return updated;
+    },
+    [refreshFinance],
+  );
 
   const updateStudentProfile = useCallback(
     async (studentId: string, profile: StudentProfileInput) => {
       const updated = await updateStudentProfileAction(studentId, profile);
       setStudents((prev) => prev.map((s) => (s.id === studentId ? updated : s)));
+      await refreshFinance();
       return updated;
     },
-    [],
+    [refreshFinance],
   );
 
   const updateExamRecord = useCallback(
     async (examRecordId: string, examRecord: ExamRecordEditInput) => {
       const updated = await updateExamRecordAction(examRecordId, examRecord);
       setStudents((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+      await refreshFinance();
       return updated;
     },
-    [],
+    [refreshFinance],
   );
 
   const findStudentsByQuery = useCallback(
@@ -312,6 +349,20 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+  const addDeposit = useCallback(
+    async (partnerId: string, amount: number, note?: string) => {
+      const created = await addDepositAction(partnerId, amount, note);
+      setFinanceTransactions((prev) => [created, ...prev]);
+      return created;
+    },
+    [],
+  );
+
+  const deleteFinanceTransaction = useCallback(async (transactionId: string) => {
+    await deleteFinanceTransactionAction(transactionId);
+    setFinanceTransactions((prev) => prev.filter((t) => t.id !== transactionId));
+  }, []);
+
   const value = useMemo<AppDataContextValue>(
     () => ({
       ready,
@@ -321,6 +372,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       subjects,
       subjectLevels,
       examPrograms,
+      financeTransactions,
       refresh,
       addPartner,
       deletePartner,
@@ -341,6 +393,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       updateExamFee,
       addPaymentComment,
       deletePaymentComment,
+      addDeposit,
+      deleteFinanceTransaction,
     }),
     [
       ready,
@@ -350,6 +404,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       subjects,
       subjectLevels,
       examPrograms,
+      financeTransactions,
       refresh,
       addPartner,
       deletePartner,
@@ -370,6 +425,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       updateExamFee,
       addPaymentComment,
       deletePaymentComment,
+      addDeposit,
+      deleteFinanceTransaction,
     ],
   );
 

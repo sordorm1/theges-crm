@@ -5,13 +5,14 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { BASE_PATH } from "@/lib/base-path";
-import { LayoutDashboard, Building2, Users, GraduationCap, Settings2 } from "lucide-react";
+import { LayoutDashboard, Building2, Users, GraduationCap, Settings2, Wallet } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Дашборд", icon: LayoutDashboard },
   { href: "/partners", label: "Партнёры", icon: Building2 },
   { href: "/students", label: "Ученики", icon: Users },
   { href: "/exams", label: "Экзамены", icon: GraduationCap },
+  { href: "/finance", label: "Финансы", icon: Wallet },
   { href: "/settings", label: "Настройки", icon: Settings2 },
 ];
 

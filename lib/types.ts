@@ -70,6 +70,19 @@ export interface Student {
   examRecords: ExamRecord[];
 }
 
+export type FinanceKind = "deposit" | "registration" | "consultation" | "exam";
+
+export interface FinanceTransaction {
+  id: string;
+  partnerId: string;
+  studentId?: string;
+  examRecordId?: string;
+  kind: FinanceKind;
+  amountUsd: number;
+  note?: string;
+  createdAt: string; // ISO datetime (UTC)
+}
+
 export interface DashboardFilters {
   from?: string;
   to?: string;
