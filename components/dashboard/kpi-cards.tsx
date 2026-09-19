@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Users, TrendingUp, Award, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { pluralizeStudents } from "@/lib/format";
+import { useTranslation } from "@/lib/i18n/context";
 
 interface Kpi {
   label: string;
@@ -28,32 +29,36 @@ export function KpiCards({
   topProgramName: string;
   topProgramCount: number;
 }) {
+  const { t, locale } = useTranslation();
+
   const kpis: Kpi[] = [
     {
-      label: "Всего учеников",
+      label: t("dashboard.kpi.totalStudents"),
       value: String(total),
-      sub: "за всё время",
+      sub: t("dashboard.kpi.allTime"),
       icon: Users,
       accent: "text-blue-600 bg-blue-50",
     },
     {
-      label: "Новых в этом месяце",
+      label: t("dashboard.kpi.newThisMonth"),
       value: String(thisMonth),
-      sub: "текущий месяц",
+      sub: t("dashboard.kpi.thisMonth"),
       icon: TrendingUp,
       accent: "text-emerald-600 bg-emerald-50",
     },
     {
-      label: "Топ-партнёр",
+      label: t("dashboard.kpi.topPartner"),
       value: topPartnerName || "—",
-      sub: topPartnerName ? `${pluralizeStudents(topPartnerCount)} привёл` : "нет данных",
+      sub: topPartnerName
+        ? `${pluralizeStudents(topPartnerCount, locale)} ${t("dashboard.kpi.broughtStudents")}`
+        : t("dashboard.kpi.noData"),
       icon: Award,
       accent: "text-amber-600 bg-amber-50",
     },
     {
-      label: "Популярный курс",
+      label: t("dashboard.kpi.topProgram"),
       value: topProgramName || "—",
-      sub: topProgramName ? pluralizeStudents(topProgramCount) : "нет данных",
+      sub: topProgramName ? pluralizeStudents(topProgramCount, locale) : t("dashboard.kpi.noData"),
       icon: Target,
       accent: "text-violet-600 bg-violet-50",
     },

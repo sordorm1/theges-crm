@@ -9,18 +9,20 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useTranslation } from "@/lib/i18n/context";
 
 export function MonthlyChart({
   data,
 }: {
   data: { key: string; label: string; count: number }[];
 }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold">Набор учеников по месяцам</h3>
-          <p className="text-xs text-muted-foreground">последние 12 месяцев</p>
+          <h3 className="text-sm font-semibold">{t("dashboard.monthlyChart.title")}</h3>
+          <p className="text-xs text-muted-foreground">{t("dashboard.monthlyChart.subtitle")}</p>
         </div>
       </div>
       <ResponsiveContainer width="100%" height={260}>
@@ -55,7 +57,7 @@ export function MonthlyChart({
           <Area
             type="monotone"
             dataKey="count"
-            name="Учеников"
+            name={t("dashboard.monthlyChart.seriesName")}
             stroke="var(--chart-1)"
             strokeWidth={2.5}
             fill="url(#enrollFill)"

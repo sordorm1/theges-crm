@@ -37,12 +37,13 @@ export async function listFinanceTransactions(): Promise<FinanceTransaction[]> {
 export async function addDeposit(
   partnerId: string,
   amount: number,
+  type: "in" | "out",
   note?: string,
 ): Promise<FinanceTransaction> {
   const res = await fetch(`${EDGE_FUNCTIONS_URL}/finance`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "add-deposit", partnerId, amount, note }),
+    body: JSON.stringify({ action: "add-deposit", partnerId, amount, type, note }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? "Failed to add deposit");

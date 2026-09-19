@@ -10,12 +10,14 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { BASE_PATH } from "@/lib/base-path";
+import { useTranslation } from "@/lib/i18n/context";
 
 const MIN_SPLASH_MS = 1000;
 const MAX_SPLASH_MS = 2000;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { ready, error } = useAppData();
+  const { t } = useTranslation();
   const [minTimeDone, setMinTimeDone] = useState(false);
   const [maxTimeDone, setMaxTimeDone] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -48,7 +50,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               variant="ghost"
               size="icon"
               onClick={() => setMobileOpen(true)}
-              aria-label="Открыть меню"
+              aria-label={t("appShell.openMenu")}
             >
               <Menu className="size-5" />
             </Button>
@@ -58,7 +60,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetContent side="left" className="w-64 border-none p-0">
-              <SheetTitle className="sr-only">Меню навигации</SheetTitle>
+              <SheetTitle className="sr-only">{t("appShell.navMenu")}</SheetTitle>
               <Sidebar onNavigate={() => setMobileOpen(false)} />
             </SheetContent>
           </Sheet>
@@ -72,7 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {error ? (
               <div className="flex flex-col items-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
                 <AlertTriangle className="size-5" />
-                Не удалось загрузить данные: {error}
+                {t("appShell.loadError")}: {error}
               </div>
             ) : ready ? (
               children

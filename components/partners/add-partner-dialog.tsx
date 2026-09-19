@@ -17,9 +17,11 @@ import { Label } from "@/components/ui/label";
 import { useAppData } from "@/lib/data/store-context";
 import { compressImage } from "@/lib/image/compress";
 import Image from "next/image";
+import { useTranslation } from "@/lib/i18n/context";
 
 export function AddPartnerDialog() {
   const { addPartner, nextPartnerCode } = useAppData();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -47,7 +49,7 @@ export function AddPartnerDialog() {
       setLogo(compressed);
       setCompressedSize(Math.round((compressed.length * 3) / 4));
     } catch {
-      toast.error("Не удалось обработать изображение");
+      toast.error(t("partners.imageFailedToast"));
     } finally {
       setCompressing(false);
     }
@@ -55,7 +57,7 @@ export function AddPartnerDialog() {
 
   async function handleSubmit() {
     if (!name.trim()) {
-      toast.error("Укажите название компании");
+      toast.error(t("partners.nameRequiredToast"));
       return;
     }
     const finalCode = code.trim() || nextPartnerCode(name);
@@ -67,11 +69,11 @@ export function AddPartnerDialog() {
         code: finalCode.toUpperCase(),
         logoDataUrl: logo,
       });
-      toast.success(`Партнёр «${name.trim()}» добавлен`);
+      toast.success(t("partners.addedToast", name.trim()));
       reset();
       setOpen(false);
     } catch {
-      toast.error("Не удалось сохранить партнёра");
+      toast.error(t("partners.saveFailedToast"));
     } finally {
       setSaving(false);
     }
@@ -87,11 +89,11 @@ export function AddPartnerDialog() {
     >
       <DialogTrigger render={<Button className="gap-2" />}>
         <Plus className="size-4" />
-        Добавить партнёра
+        {t("partners.add")}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Новый партнёр</DialogTitle>
+          <DialogTitle>{t("partners.newPartner")}</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
@@ -107,7 +109,7 @@ export function AddPartnerDialog() {
             </div>
             <div className="flex flex-col gap-1">
               <Label htmlFor="logo-upload" className="w-fit cursor-pointer text-xs font-medium text-primary hover:underline">
-                Загрузить лого
+                {t("partners.uploadLogo")}
               </Label>
               <input
                 id="logo-upload"
@@ -128,18 +130,18 @@ export function AddPartnerDialog() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="partner-name">Название компании</Label>
+            <Label htmlFor="partner-name">{t("partners.companyName")}</Label>
             <Input
               id="partner-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Global Study Center"
+              placeholder={t("partners.companyNamePlaceholder")}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="partner-phone">Телефон</Label>
+              <Label htmlFor="partner-phone">{t("partners.phone")}</Label>
               <Input
                 id="partner-phone"
                 value={phone}
@@ -148,7 +150,7 @@ export function AddPartnerDialog() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="partner-code">Код партнёра</Label>
+              <Label htmlFor="partner-code">{t("partners.partnerCode")}</Label>
               <Input
                 id="partner-code"
                 value={code}
@@ -161,11 +163,11 @@ export function AddPartnerDialog() {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Отмена
+            {t("common.cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="size-4 animate-spin" />}
-            Сохранить
+            {t("common.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

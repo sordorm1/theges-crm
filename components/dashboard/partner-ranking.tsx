@@ -2,20 +2,22 @@
 
 import Image from "next/image";
 import type { Partner } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n/context";
 
 export function PartnerRanking({
   ranking,
 }: {
   ranking: { partner: Partner; count: number }[];
 }) {
+  const { t } = useTranslation();
   const max = Math.max(1, ...ranking.map((r) => r.count));
   const top = ranking.slice(0, 6);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold">Рейтинг партнёров</h3>
-        <p className="text-xs text-muted-foreground">по числу приведённых учеников</p>
+        <h3 className="text-sm font-semibold">{t("dashboard.partnerRanking.title")}</h3>
+        <p className="text-xs text-muted-foreground">{t("dashboard.partnerRanking.subtitle")}</p>
       </div>
       <div className="flex flex-col gap-3">
         {top.map(({ partner, count }, i) => (
@@ -53,7 +55,7 @@ export function PartnerRanking({
           </div>
         ))}
         {top.length === 0 && (
-          <p className="text-sm text-muted-foreground">Пока нет данных</p>
+          <p className="text-sm text-muted-foreground">{t("dashboard.partnerRanking.noData")}</p>
         )}
       </div>
     </div>

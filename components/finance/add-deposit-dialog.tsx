@@ -23,17 +23,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAppData } from "@/lib/data/store-context";
+import { useTranslation } from "@/lib/i18n/context";
+import { cn } from "@/lib/utils";
 
 export function AddDepositDialog({ defaultPartnerId }: { defaultPartnerId?: string }) {
   const { partners, addDeposit } = useAppData();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [partnerId, setPartnerId] = useState(defaultPartnerId ?? "");
+  const [direction, setDirection] = useState<"in" | "out">("in");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
   function reset() {
     setPartnerId(defaultPartnerId ?? "");
+    setDirection("in");
     setAmount("");
     setNote("");
   }
@@ -41,22 +46,26 @@ export function AddDepositDialog({ defaultPartnerId }: { defaultPartnerId?: stri
   async function handleSave() {
     const value = Number(amount.replace(",", "."));
     if (!partnerId) {
-      toast.error("Выберите партнёра");
+      toast.error(t("finance.selectPartnerToast"));
       return;
     }
     if (!amount || Number.isNaN(value) || value <= 0) {
-      toast.error("Введите сумму больше нуля");
+      toast.error(t("finance.amountToast"));
       return;
     }
     setSaving(true);
     try {
-      await addDeposit(partnerId, value, note.trim() || undefined);
+      await addDeposit(partnerId, value, direction, note.trim() || undefined);
       const partner = partners.find((p) => p.id === partnerId);
-      toast.success(`Депозит $${value} от «${partner?.name}» добавлен`);
+      toast.success(
+        direction === "in"
+          ? t("finance.addedToast", value, partner?.name)
+          : t("finance.withdrawnToast", value, partner?.name),
+      );
       reset();
       setOpen(false);
     } catch {
-      toast.error("Не удалось добавить депозит");
+      toast.error(t("finance.saveFailedToast"));
     } finally {
       setSaving(false);
     }
@@ -72,23 +81,40 @@ export function AddDepositDialog({ defaultPartnerId }: { defaultPartnerId?: stri
     >
       <DialogTrigger render={<Button className="gap-2" />}>
         <Plus className="size-4" />
-        Добавить депозит
+        {t("finance.addDeposit")}
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Новый депозит</DialogTitle>
+          <DialogTitle>{t("finance.newDeposit")}</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-0.5 rounded-full bg-muted p-0.5 self-start">
+            {(["in", "out"] as const).map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => setDirection(d)}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+                  direction === d
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {d === "in" ? t("finance.directionIn") : t("finance.directionOut")}
+              </button>
+            ))}
+          </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Партнёр</Label>
+            <Label>{t("finance.partner")}</Label>
             <Select
               value={partnerId}
               onValueChange={(v) => setPartnerId(v ?? "")}
               items={Object.fromEntries(partners.map((p) => [p.id, `${p.name} (${p.code})`]))}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Выберите партнёра" />
+                <SelectValue placeholder={t("finance.selectPartner")} />
               </SelectTrigger>
               <SelectContent>
                 {partners.map((p) => (
@@ -100,7 +126,7 @@ export function AddDepositDialog({ defaultPartnerId }: { defaultPartnerId?: stri
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Сумма, $</Label>
+            <Label>{t("finance.amount")}</Label>
             <Input
               inputMode="decimal"
               value={amount}
@@ -110,11 +136,11 @@ export function AddDepositDialog({ defaultPartnerId }: { defaultPartnerId?: stri
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Комментарий (необязательно)</Label>
+            <Label>{t("finance.comment")}</Label>
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Например: наличными, за сентябрь"
+              placeholder={t("finance.commentPlaceholder")}
               className="min-h-16 text-sm"
             />
           </div>
@@ -122,11 +148,11 @@ export function AddDepositDialog({ defaultPartnerId }: { defaultPartnerId?: stri
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Отмена
+            {t("common.cancel")}
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving && <Loader2 className="size-4 animate-spin" />}
-            Сохранить
+            {t("common.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

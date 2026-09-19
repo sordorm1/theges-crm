@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n/context";
 
 export function PinDialog({
   open,
@@ -25,6 +26,7 @@ export function PinDialog({
   /** Set after a failed attempt to show an inline error message. */
   error?: string | null;
 }) {
+  const { t } = useTranslation();
   const [pin, setPin] = useState("");
 
   return (
@@ -39,11 +41,11 @@ export function PinDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <Lock className="size-4" />
-            Код подтверждения
+            {t("pinDialog.title")}
           </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="pin-input">Эту сумму уже кто-то вводил. Введите код руководителя, чтобы изменить её.</Label>
+          <Label htmlFor="pin-input">{t("pinDialog.label")}</Label>
           <Input
             id="pin-input"
             type="password"
@@ -62,10 +64,10 @@ export function PinDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Отмена
+            {t("common.cancel")}
           </Button>
           <Button disabled={!pin} onClick={() => onConfirm(pin)}>
-            Подтвердить
+            {t("pinDialog.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

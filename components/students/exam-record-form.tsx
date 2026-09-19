@@ -12,6 +12,7 @@ import {
 import { useAppData } from "@/lib/data/store-context";
 import { programsForSubject, subjectLabels } from "@/lib/data/programs";
 import type { ExamStatus } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n/context";
 
 export interface ExamRecordDraft {
   subjectKey: string;
@@ -49,6 +50,7 @@ export function ExamRecordForm({
   onChange: (v: ExamRecordDraft) => void;
 }) {
   const { subjects, examPrograms, subjectLevels } = useAppData();
+  const { t } = useTranslation();
   const labels = subjectLabels(subjects);
   const availablePrograms = value.subjectKey ? programsForSubject(examPrograms, value.subjectKey) : [];
   const subject = subjects.find((s) => s.key === value.subjectKey);
@@ -64,14 +66,14 @@ export function ExamRecordForm({
     <div className="flex flex-col gap-4 rounded-xl border border-border p-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <Label>Направление</Label>
+          <Label>{t("examForm.direction")}</Label>
           <Select
             value={value.subjectKey}
             onValueChange={(v) => patch({ subjectKey: v ?? "", programId: "", levelLabel: "" })}
             items={labels}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Выберите направление" />
+              <SelectValue placeholder={t("examForm.selectDirection")} />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(labels).map(([key, label]) => (
@@ -83,7 +85,7 @@ export function ExamRecordForm({
           </Select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>Экзамен / программа</Label>
+          <Label>{t("examForm.examProgram")}</Label>
           <Select
             value={value.programId}
             onValueChange={(v) => patch({ programId: v ?? "" })}
@@ -91,7 +93,7 @@ export function ExamRecordForm({
             items={Object.fromEntries(availablePrograms.map((p) => [p.id, p.name]))}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Выберите экзамен" />
+              <SelectValue placeholder={t("examForm.selectExam")} />
             </SelectTrigger>
             <SelectContent>
               {availablePrograms.map((p) => (
@@ -106,28 +108,28 @@ export function ExamRecordForm({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
-          <Label>Дата</Label>
+          <Label>{t("examForm.date")}</Label>
           <Input type="date" value={value.date} onChange={(e) => patch({ date: e.target.value })} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>Статус</Label>
+          <Label>{t("examForm.status")}</Label>
           <Select
             value={value.status}
             onValueChange={(v) => patch({ status: (v ?? "scheduled") as ExamStatus })}
-            items={{ scheduled: "Запланирован", passed: "Сдал", failed: "Не сдал" }}
+            items={{ scheduled: t("status.scheduled"), passed: t("status.passed"), failed: t("status.failed") }}
           >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="scheduled">Запланирован</SelectItem>
-              <SelectItem value="passed">Сдал</SelectItem>
-              <SelectItem value="failed">Не сдал</SelectItem>
+              <SelectItem value="scheduled">{t("status.scheduled")}</SelectItem>
+              <SelectItem value="passed">{t("status.passed")}</SelectItem>
+              <SelectItem value="failed">{t("status.failed")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>Уровень</Label>
+          <Label>{t("examForm.level")}</Label>
           <Select
             value={value.levelLabel}
             onValueChange={(v) => patch({ levelLabel: v ?? "" })}
@@ -135,7 +137,7 @@ export function ExamRecordForm({
             items={Object.fromEntries(availableLevels.map((l) => [l.label, l.label]))}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder={availableLevels.length ? "Выберите уровень" : "Нет уровней"} />
+              <SelectValue placeholder={availableLevels.length ? t("examForm.selectLevel") : t("examForm.noLevels")} />
             </SelectTrigger>
             <SelectContent>
               {availableLevels.map((l) => (
@@ -149,15 +151,15 @@ export function ExamRecordForm({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Логин, пароль и exam key вводятся вручную — так, как их выдали ученику в тестовом центре.
+        {t("examForm.loginHint")}
       </p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
-          <Label>Логин</Label>
+          <Label>{t("examForm.login")}</Label>
           <Input value={value.login} onChange={(e) => patch({ login: e.target.value })} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>Пароль</Label>
+          <Label>{t("examForm.password")}</Label>
           <Input
             value={value.password}
             onChange={(e) => patch({ password: e.target.value })}
@@ -165,7 +167,7 @@ export function ExamRecordForm({
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>Exam Key</Label>
+          <Label>{t("examForm.examKey")}</Label>
           <Input
             value={value.examKey}
             onChange={(e) => patch({ examKey: e.target.value })}
@@ -175,11 +177,11 @@ export function ExamRecordForm({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Суммы в долларах. Изменить уже сохранённую сумму позже можно будет только с кодом руководителя.
+        {t("examForm.feesHint")}
       </p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
-          <Label>Регистрация, $</Label>
+          <Label>{t("examForm.registration")}</Label>
           <Input
             inputMode="decimal"
             value={value.registrationFeeUsd}
@@ -188,7 +190,7 @@ export function ExamRecordForm({
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>Экзамен, $</Label>
+          <Label>{t("examForm.exam")}</Label>
           <Input
             inputMode="decimal"
             value={value.examFeeUsd}
@@ -197,7 +199,7 @@ export function ExamRecordForm({
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>Консультация, $</Label>
+          <Label>{t("examForm.consultation")}</Label>
           <Input
             inputMode="decimal"
             value={value.consultationFeeUsd}

@@ -10,6 +10,7 @@ import { useAppData } from "@/lib/data/store-context";
 import { subjectLabels } from "@/lib/data/programs";
 import { Button } from "@/components/ui/button";
 import type { ExamProgram } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n/context";
 
 function ProgramCard({
   program,
@@ -23,18 +24,19 @@ function ProgramCard({
   index: number;
 }) {
   const { deleteExamProgram } = useAppData();
+  const { t } = useTranslation();
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
 
   async function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!confirm(`Удалить программу «${program.name}»?`)) return;
+    if (!confirm(t("exams.deleteConfirm", program.name))) return;
     setDeleting(true);
     try {
       await deleteExamProgram(program.id);
-      toast.success("Программа удалена");
+      toast.success(t("exams.deletedToast"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Не удалось удалить программу");
+      toast.error(err instanceof Error ? err.message : t("exams.deleteFailedToast"));
       setDeleting(false);
     }
   }
@@ -67,7 +69,7 @@ function ProgramCard({
             type="button"
             onClick={handleDelete}
             disabled={deleting}
-            aria-label="Удалить программу"
+            aria-label={t("exams.deleteAriaLabel")}
             className="flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
@@ -78,7 +80,7 @@ function ProgramCard({
         <h3 className="text-base font-semibold group-hover:text-primary">{program.name}</h3>
         <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
           <Users className="size-3.5" />
-          {count} учеников
+          {count} {t("exams.studentsCount")}
         </div>
       </div>
     </motion.div>
@@ -87,6 +89,7 @@ function ProgramCard({
 
 export default function ExamsPage() {
   const { students, examPrograms, subjects } = useAppData();
+  const { t } = useTranslation();
   const labels = useMemo(() => subjectLabels(subjects), [subjects]);
 
   const counts = useMemo(() => {
@@ -103,14 +106,14 @@ export default function ExamsPage() {
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Экзамены</h1>
+          <h1 className="text-2xl font-bold">{t("exams.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Программы подготовки · {examPrograms.length} направлений
+            {t("exams.subtitle")} · {examPrograms.length} {t("exams.directionsCount")}
           </p>
         </div>
         <Button variant="outline" className="gap-2" render={<Link href="/settings" />}>
           <Settings2 className="size-4" />
-          Добавить направление / экзамен
+          {t("exams.addDirection")}
         </Button>
       </div>
 
@@ -125,7 +128,7 @@ export default function ExamsPage() {
           />
         ))}
         {examPrograms.length === 0 && (
-          <p className="text-sm text-muted-foreground">Пока нет программ экзаменов</p>
+          <p className="text-sm text-muted-foreground">{t("exams.noPrograms")}</p>
         )}
       </div>
     </div>

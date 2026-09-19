@@ -45,8 +45,10 @@ import {
   EMPTY_EXAM_RECORD_DRAFT,
   type ExamRecordDraft,
 } from "@/components/students/exam-record-form";
+import { useTranslation } from "@/lib/i18n/context";
 
 function SecretField({ label, value }: { label: string; value: string }) {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   return (
     <div className="flex flex-col gap-1.5 rounded-lg bg-muted px-3 py-2.5">
@@ -69,7 +71,7 @@ function SecretField({ label, value }: { label: string; value: string }) {
             className="size-6"
             onClick={() => {
               navigator.clipboard?.writeText(value);
-              toast.success(`${label} скопирован`);
+              toast.success(t("secretField.copiedToast", label));
             }}
           >
             <Copy className="size-3.5" />
@@ -85,25 +87,21 @@ function SecretField({ label, value }: { label: string; value: string }) {
 
 function ProfileSection({ student, onDeleted }: { student: Student; onDeleted: () => void }) {
   const { partners, updateStudentProfile, deleteStudent } = useAppData();
+  const { t } = useTranslation();
   const partner = partners.find((p) => p.id === student.partnerId);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   async function handleDelete() {
-    if (
-      !confirm(
-        `Удалить ученика «${fullName(student)}»? Это удалит все его экзамены, логины и историю оплат. Действие необратимо.`,
-      )
-    )
-      return;
+    if (!confirm(t("students.deleteConfirmLong", fullName(student)))) return;
     setDeleting(true);
     try {
       await deleteStudent(student.id);
-      toast.success("Ученик удалён");
+      toast.success(t("students.deletedToast"));
       onDeleted();
     } catch {
-      toast.error("Не удалось удалить ученика");
+      toast.error(t("students.deleteFailedToast"));
       setDeleting(false);
     }
   }
@@ -129,7 +127,7 @@ function ProfileSection({ student, onDeleted }: { student: Student; onDeleted: (
 
   async function handleSave() {
     if (!firstName.trim() || !lastName.trim() || !passport.trim()) {
-      toast.error("Заполните имя, фамилию и паспортные данные");
+      toast.error(t("studentDetail.requiredFieldsToast"));
       return;
     }
     setSaving(true);
@@ -143,10 +141,10 @@ function ProfileSection({ student, onDeleted }: { student: Student; onDeleted: (
         email: email.trim() || undefined,
         partnerId: partnerId === "none" ? null : partnerId,
       });
-      toast.success("Данные ученика обновлены");
+      toast.success(t("studentDetail.profileUpdatedToast"));
       setEditing(false);
     } catch {
-      toast.error("Не удалось сохранить изменения");
+      toast.error(t("studentDetail.saveFailedToast"));
     } finally {
       setSaving(false);
     }
@@ -157,39 +155,39 @@ function ProfileSection({ student, onDeleted }: { student: Student; onDeleted: (
       <div className="flex flex-col gap-3 rounded-xl border border-border p-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="flex flex-col gap-1.5">
-            <Label>Firstname</Label>
+            <Label>{t("students.firstname")}</Label>
             <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Middlename</Label>
+            <Label>{t("students.middlename")}</Label>
             <Input value={middleName} onChange={(e) => setMiddleName(e.target.value)} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Lastname</Label>
+            <Label>{t("students.lastname")}</Label>
             <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <Label>Паспортные данные</Label>
+            <Label>{t("students.passport")}</Label>
             <Input value={passport} onChange={(e) => setPassport(e.target.value.toUpperCase())} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label>Телефон</Label>
+            <Label>{t("students.phone")}</Label>
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
           </div>
           <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <Label>Email</Label>
+            <Label>{t("students.email")}</Label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>Партнёр</Label>
+          <Label>{t("students.partner")}</Label>
           <Select
             value={partnerId}
             onValueChange={(v) => setPartnerId(v ?? "none")}
             items={{
-              none: "Без партнёра",
+              none: t("common.noPartner"),
               ...Object.fromEntries(partners.map((p) => [p.id, `${p.name} (${p.code})`])),
             }}
           >
@@ -197,7 +195,7 @@ function ProfileSection({ student, onDeleted }: { student: Student; onDeleted: (
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Без партнёра</SelectItem>
+              <SelectItem value="none">{t("common.noPartner")}</SelectItem>
               {partners.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   {p.name} ({p.code})
@@ -208,11 +206,11 @@ function ProfileSection({ student, onDeleted }: { student: Student; onDeleted: (
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>
-            Отмена
+            {t("common.cancel")}
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving && <Loader2 className="size-4 animate-spin" />}
-            Сохранить
+            {t("common.save")}
           </Button>
         </div>
       </div>
@@ -236,13 +234,13 @@ function ProfileSection({ student, onDeleted }: { student: Student; onDeleted: (
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
           <Building2 className="size-4 shrink-0 text-muted-foreground" />
-          <span>{partner ? `${partner.name} · ${partner.code}` : "Без партнёра"}</span>
+          <span>{partner ? `${partner.name} · ${partner.code}` : t("common.noPartner")}</span>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
         <Button variant="ghost" size="sm" className="w-fit gap-1.5 text-muted-foreground" onClick={startEdit}>
           <Pencil className="size-3.5" />
-          Редактировать данные ученика
+          {t("studentDetail.editProfile")}
         </Button>
         <Button
           variant="ghost"
@@ -252,7 +250,7 @@ function ProfileSection({ student, onDeleted }: { student: Student; onDeleted: (
           disabled={deleting}
         >
           {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-          Удалить ученика
+          {t("studentDetail.deleteStudent")}
         </Button>
       </div>
     </div>
@@ -261,6 +259,7 @@ function ProfileSection({ student, onDeleted }: { student: Student; onDeleted: (
 
 function ExamRecordCard({ record }: { record: ExamRecord }) {
   const { examPrograms, updateExamRecord, deleteExamRecord } = useAppData();
+  const { t, locale } = useTranslation();
   const program = getProgram(examPrograms, record.examProgramId);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -293,23 +292,23 @@ function ExamRecordCard({ record }: { record: ExamRecord }) {
         password,
         examKey,
       });
-      toast.success("Экзамен обновлён");
+      toast.success(t("studentDetail.examUpdatedToast"));
       setEditing(false);
     } catch {
-      toast.error("Не удалось сохранить изменения");
+      toast.error(t("studentDetail.saveFailedToast"));
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete() {
-    if (!confirm(`Удалить экзамен «${program?.name ?? "программа"}»? Действие необратимо.`)) return;
+    if (!confirm(t("studentDetail.examDeleteConfirm", program?.name ?? t("studentDetail.examProgramFallback")))) return;
     setDeleting(true);
     try {
       await deleteExamRecord(record.id);
-      toast.success("Экзамен удалён");
+      toast.success(t("studentDetail.examDeletedToast"));
     } catch {
-      toast.error("Не удалось удалить экзамен");
+      toast.error(t("studentDetail.examDeleteFailedToast"));
       setDeleting(false);
     }
   }
@@ -321,9 +320,9 @@ function ExamRecordCard({ record }: { record: ExamRecord }) {
           <div className="text-sm font-semibold">{program?.name ?? record.examProgramId}</div>
           {!editing && (
             <div className="text-xs text-muted-foreground">
-              {formatDate(record.date)}
-              {record.score ? ` · балл: ${record.score}` : ""}
-              {record.levelLabel ? ` · уровень: ${record.levelLabel}` : ""}
+              {formatDate(record.date, locale)}
+              {record.score ? ` · ${t("studentDetail.score")}: ${record.score}` : ""}
+              {record.levelLabel ? ` · ${t("studentDetail.level")}: ${record.levelLabel}` : ""}
             </div>
           )}
         </div>
@@ -352,61 +351,61 @@ function ExamRecordCard({ record }: { record: ExamRecord }) {
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="flex flex-col gap-1.5">
-              <Label>Дата</Label>
+              <Label>{t("examForm.date")}</Label>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Статус</Label>
+              <Label>{t("examForm.status")}</Label>
               <Select
                 value={status}
                 onValueChange={(v) => setStatus((v ?? "scheduled") as ExamStatus)}
-                items={{ scheduled: "Запланирован", passed: "Сдал", failed: "Не сдал" }}
+                items={{ scheduled: t("status.scheduled"), passed: t("status.passed"), failed: t("status.failed") }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="scheduled">Запланирован</SelectItem>
-                  <SelectItem value="passed">Сдал</SelectItem>
-                  <SelectItem value="failed">Не сдал</SelectItem>
+                  <SelectItem value="scheduled">{t("status.scheduled")}</SelectItem>
+                  <SelectItem value="passed">{t("status.passed")}</SelectItem>
+                  <SelectItem value="failed">{t("status.failed")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Уровень</Label>
+              <Label>{t("examForm.level")}</Label>
               <Input value={levelLabel} onChange={(e) => setLevelLabel(e.target.value)} placeholder="напр. B2" />
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="flex flex-col gap-1.5">
-              <Label>Логин</Label>
+              <Label>{t("examForm.login")}</Label>
               <Input value={login} onChange={(e) => setLogin(e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Пароль</Label>
+              <Label>{t("examForm.password")}</Label>
               <Input value={password} onChange={(e) => setPassword(e.target.value)} className="font-mono" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Exam Key</Label>
+              <Label>{t("examForm.examKey")}</Label>
               <Input value={examKey} onChange={(e) => setExamKey(e.target.value)} className="font-mono" />
             </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setEditing(false)} disabled={saving}>
               <X className="size-3.5" />
-              Отмена
+              {t("common.cancel")}
             </Button>
             <Button size="sm" onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
-              Сохранить
+              {t("common.save")}
             </Button>
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <SecretField label="Логин" value={record.login} />
-          <SecretField label="Пароль" value={record.password} />
-          <SecretField label="Exam Key" value={record.examKey} />
+          <SecretField label={t("examForm.login")} value={record.login} />
+          <SecretField label={t("examForm.password")} value={record.password} />
+          <SecretField label={t("examForm.examKey")} value={record.examKey} />
         </div>
       )}
 
@@ -417,6 +416,7 @@ function ExamRecordCard({ record }: { record: ExamRecord }) {
 
 function AddExamRecordBlock({ studentId }: { studentId: string }) {
   const { addExamRecordToStudent } = useAppData();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exam, setExam] = useState<ExamRecordDraft>(EMPTY_EXAM_RECORD_DRAFT);
@@ -425,14 +425,14 @@ function AddExamRecordBlock({ studentId }: { studentId: string }) {
     return (
       <Button variant="outline" className="w-full gap-2" onClick={() => setOpen(true)}>
         <Plus className="size-4" />
-        Добавить экзамен
+        {t("studentDetail.addExam")}
       </Button>
     );
   }
 
   async function handleSave() {
     if (!exam.programId) {
-      toast.error("Выберите направление и экзамен");
+      toast.error(t("studentDetail.selectProgramToast"));
       return;
     }
     setSaving(true);
@@ -449,11 +449,11 @@ function AddExamRecordBlock({ studentId }: { studentId: string }) {
         examFeeUsd: exam.examFeeUsd ? Number(exam.examFeeUsd) : undefined,
         consultationFeeUsd: exam.consultationFeeUsd ? Number(exam.consultationFeeUsd) : undefined,
       });
-      toast.success("Экзамен добавлен");
+      toast.success(t("studentDetail.examAddedToast"));
       setExam(EMPTY_EXAM_RECORD_DRAFT);
       setOpen(false);
     } catch {
-      toast.error("Не удалось добавить экзамен");
+      toast.error(t("studentDetail.examAddFailedToast"));
     } finally {
       setSaving(false);
     }
@@ -464,11 +464,11 @@ function AddExamRecordBlock({ studentId }: { studentId: string }) {
       <ExamRecordForm value={exam} onChange={setExam} />
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={() => setOpen(false)}>
-          Отмена
+          {t("common.cancel")}
         </Button>
         <Button onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="size-4 animate-spin" />}
-          Сохранить
+          {t("common.save")}
         </Button>
       </div>
     </div>
@@ -484,6 +484,7 @@ export function StudentDetailSheet({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
+  const { t, locale } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
@@ -497,16 +498,16 @@ export function StudentDetailSheet({
               <ProfileSection student={student} onDeleted={() => onOpenChange(false)} />
 
               <div className="text-xs text-muted-foreground">
-                Зарегистрирован: {formatDate(student.createdAt)}
+                {t("studentDetail.registeredAt")}: {formatDate(student.createdAt, locale)}
               </div>
 
               <Separator />
 
               <div className="flex flex-col gap-4">
-                <h4 className="text-sm font-semibold">Экзамены</h4>
+                <h4 className="text-sm font-semibold">{t("studentDetail.examsTitle")}</h4>
                 {student.examRecords.length === 0 && (
                   <p className="text-sm text-muted-foreground">
-                    Экзамены пока не назначены
+                    {t("studentDetail.noExams")}
                   </p>
                 )}
                 {student.examRecords.map((r) => (

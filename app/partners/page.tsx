@@ -4,9 +4,11 @@ import { useMemo } from "react";
 import { useAppData } from "@/lib/data/store-context";
 import { PartnerCard } from "@/components/partners/partner-card";
 import { AddPartnerDialog } from "@/components/partners/add-partner-dialog";
+import { useTranslation } from "@/lib/i18n/context";
 
 export default function PartnersPage() {
   const { partners, students } = useAppData();
+  const { t } = useTranslation();
 
   const counts = useMemo(() => {
     const map = new Map<string, number>();
@@ -29,9 +31,9 @@ export default function PartnersPage() {
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Партнёры</h1>
+          <h1 className="text-2xl font-bold">{t("partners.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Консалтинговые фирмы, которые приводят учеников · {partners.length} всего
+            {t("partners.subtitle")} · {partners.length} {t("partners.total")}
           </p>
         </div>
         <AddPartnerDialog />
@@ -49,7 +51,7 @@ export default function PartnersPage() {
       </div>
 
       {sorted.length === 0 && (
-        <p className="text-sm text-muted-foreground">Пока нет партнёров</p>
+        <p className="text-sm text-muted-foreground">{t("partners.noPartners")}</p>
       )}
     </div>
   );

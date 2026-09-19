@@ -11,17 +11,19 @@ import {
   Cell,
 } from "recharts";
 import type { ExamProgram } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n/context";
 
 export function ProgramChart({
   data,
 }: {
   data: { program: ExamProgram; count: number }[];
 }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold">Популярность курсов</h3>
-        <p className="text-xs text-muted-foreground">за этот год, по числу учеников</p>
+        <h3 className="text-sm font-semibold">{t("dashboard.programChart.title")}</h3>
+        <p className="text-xs text-muted-foreground">{t("dashboard.programChart.subtitle")}</p>
       </div>
       <ResponsiveContainer width="100%" height={260}>
         <BarChart
@@ -45,7 +47,7 @@ export function ProgramChart({
               border: "1px solid var(--border)",
               fontSize: 13,
             }}
-            formatter={(value) => [`${value} учеников`, ""]}
+            formatter={(value) => [`${value} ${t("dashboard.programChart.tooltipSuffix")}`, ""]}
           />
           <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={18}>
             {data.map((d) => (

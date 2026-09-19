@@ -17,25 +17,22 @@ import { fullName, formatDate } from "@/lib/format";
 import { getProgram } from "@/lib/data/programs";
 import { useAppData } from "@/lib/data/store-context";
 import { StatusBadge } from "@/components/status-badge";
+import { useTranslation } from "@/lib/i18n/context";
 
 function DeleteStudentButton({ student }: { student: Student }) {
   const { deleteStudent } = useAppData();
+  const { t } = useTranslation();
   const [deleting, setDeleting] = useState(false);
 
   async function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
-    if (
-      !confirm(
-        `Удалить ученика «${fullName(student)}»? Это удалит все его экзамены, логины и историю оплат.`,
-      )
-    )
-      return;
+    if (!confirm(t("students.deleteConfirm", fullName(student)))) return;
     setDeleting(true);
     try {
       await deleteStudent(student.id);
-      toast.success("Ученик удалён");
+      toast.success(t("students.deletedToast"));
     } catch {
-      toast.error("Не удалось удалить ученика");
+      toast.error(t("students.deleteFailedToast"));
       setDeleting(false);
     }
   }
@@ -47,7 +44,7 @@ function DeleteStudentButton({ student }: { student: Student }) {
       className="size-7 text-muted-foreground hover:text-destructive"
       onClick={handleDelete}
       disabled={deleting}
-      aria-label="Удалить ученика"
+      aria-label={t("students.deleteAriaLabel")}
     >
       {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
     </Button>
@@ -67,18 +64,19 @@ export function StudentsTable({
   programId?: string;
 }) {
   const { examPrograms } = useAppData();
+  const { t, locale } = useTranslation();
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Ученик</TableHead>
-              <TableHead>Паспорт</TableHead>
-              <TableHead>Партнёр</TableHead>
-              <TableHead>Программа</TableHead>
-              <TableHead>Дата регистрации</TableHead>
-              <TableHead>Статус</TableHead>
+              <TableHead>{t("students.tableHeaders.student")}</TableHead>
+              <TableHead>{t("students.tableHeaders.passport")}</TableHead>
+              <TableHead>{t("students.tableHeaders.partner")}</TableHead>
+              <TableHead>{t("students.tableHeaders.program")}</TableHead>
+              <TableHead>{t("students.tableHeaders.registeredAt")}</TableHead>
+              <TableHead>{t("students.tableHeaders.status")}</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
@@ -108,7 +106,7 @@ export function StudentsTable({
                     )}
                   </TableCell>
                   <TableCell>{program?.shortName ?? "—"}</TableCell>
-                  <TableCell>{formatDate(s.createdAt)}</TableCell>
+                  <TableCell>{formatDate(s.createdAt, locale)}</TableCell>
                   <TableCell>
                     {lastExam ? <StatusBadge status={lastExam.status} /> : "—"}
                   </TableCell>
@@ -123,7 +121,7 @@ export function StudentsTable({
       </div>
       {students.length === 0 && (
         <p className="p-6 text-center text-sm text-muted-foreground">
-          Ученики не найдены
+          {t("students.notFound")}
         </p>
       )}
     </div>

@@ -111,7 +111,12 @@ interface AppDataContextValue {
   addPaymentComment: (examRecordId: string, text: string) => Promise<PaymentComment>;
   deletePaymentComment: (examRecordId: string, commentId: string) => Promise<void>;
 
-  addDeposit: (partnerId: string, amount: number, note?: string) => Promise<FinanceTransaction>;
+  addDeposit: (
+    partnerId: string,
+    amount: number,
+    type: "in" | "out",
+    note?: string,
+  ) => Promise<FinanceTransaction>;
   deleteFinanceTransaction: (transactionId: string) => Promise<void>;
 }
 
@@ -350,8 +355,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addDeposit = useCallback(
-    async (partnerId: string, amount: number, note?: string) => {
-      const created = await addDepositAction(partnerId, amount, note);
+    async (partnerId: string, amount: number, type: "in" | "out", note?: string) => {
+      const created = await addDepositAction(partnerId, amount, type, note);
       setFinanceTransactions((prev) => [created, ...prev]);
       return created;
     },

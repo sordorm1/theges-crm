@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import type { DashboardFilters, Partner, SubjectRow } from "@/lib/types";
 import { subjectLabels } from "@/lib/data/programs";
+import { useTranslation } from "@/lib/i18n/context";
 
 const EMPTY_FILTERS: DashboardFilters = {
   from: undefined,
@@ -41,6 +42,7 @@ export function FilterSheet({
   filters: DashboardFilters;
   onApply: (filters: DashboardFilters) => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DashboardFilters>(filters);
   const labels = subjectLabels(subjects);
@@ -63,7 +65,7 @@ export function FilterSheet({
         onClick={() => setOpen(true)}
       >
         <SlidersHorizontal className="size-4" />
-        Фильтры
+        {t("dashboard.filters.button")}
         {activeCount > 0 && (
           <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
             {activeCount}
@@ -73,13 +75,13 @@ export function FilterSheet({
 
       <SheetContent side="right" className="w-full sm:max-w-sm">
         <SheetHeader>
-          <SheetTitle>Фильтры дашборда</SheetTitle>
+          <SheetTitle>{t("dashboard.filters.title")}</SheetTitle>
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="from">С даты</Label>
+              <Label htmlFor="from">{t("dashboard.filters.from")}</Label>
               <Input
                 id="from"
                 type="date"
@@ -90,7 +92,7 @@ export function FilterSheet({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="to">По дату</Label>
+              <Label htmlFor="to">{t("dashboard.filters.to")}</Label>
               <Input
                 id="to"
                 type="date"
@@ -103,12 +105,12 @@ export function FilterSheet({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>Партнёр</Label>
+            <Label>{t("dashboard.filters.partner")}</Label>
             <Select
               value={draft.partnerId ?? "all"}
               onValueChange={(v) => setDraft((d) => ({ ...d, partnerId: v ?? "all" }))}
               items={{
-                all: "Все партнёры",
+                all: t("dashboard.filters.allPartners"),
                 ...Object.fromEntries(partners.map((p) => [p.id, p.name])),
               }}
             >
@@ -116,7 +118,7 @@ export function FilterSheet({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Все партнёры</SelectItem>
+                <SelectItem value="all">{t("dashboard.filters.allPartners")}</SelectItem>
                 {partners.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.name}
@@ -127,19 +129,19 @@ export function FilterSheet({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>Направление</Label>
+            <Label>{t("dashboard.filters.direction")}</Label>
             <Select
               value={draft.subject ?? "all"}
               onValueChange={(v) =>
                 setDraft((d) => ({ ...d, subject: (v ?? "all") as DashboardFilters["subject"] }))
               }
-              items={{ all: "Все направления", ...labels }}
+              items={{ all: t("dashboard.filters.allDirections"), ...labels }}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Все направления</SelectItem>
+                <SelectItem value="all">{t("dashboard.filters.allDirections")}</SelectItem>
                 {Object.entries(labels).map(([key, label]) => (
                   <SelectItem key={key} value={key}>
                     {label}
@@ -150,27 +152,27 @@ export function FilterSheet({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>Статус экзамена</Label>
+            <Label>{t("dashboard.filters.status")}</Label>
             <Select
               value={draft.status ?? "all"}
               onValueChange={(v) =>
                 setDraft((d) => ({ ...d, status: (v ?? "all") as DashboardFilters["status"] }))
               }
               items={{
-                all: "Любой статус",
-                scheduled: "Запланирован",
-                passed: "Сдал",
-                failed: "Не сдал",
+                all: t("dashboard.filters.anyStatus"),
+                scheduled: t("status.scheduled"),
+                passed: t("status.passed"),
+                failed: t("status.failed"),
               }}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Любой статус</SelectItem>
-                <SelectItem value="scheduled">Запланирован</SelectItem>
-                <SelectItem value="passed">Сдал</SelectItem>
-                <SelectItem value="failed">Не сдал</SelectItem>
+                <SelectItem value="all">{t("dashboard.filters.anyStatus")}</SelectItem>
+                <SelectItem value="scheduled">{t("status.scheduled")}</SelectItem>
+                <SelectItem value="passed">{t("status.passed")}</SelectItem>
+                <SelectItem value="failed">{t("status.failed")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -186,7 +188,7 @@ export function FilterSheet({
               setOpen(false);
             }}
           >
-            Сбросить
+            {t("dashboard.filters.reset")}
           </Button>
           <Button
             className="flex-1"
@@ -195,7 +197,7 @@ export function FilterSheet({
               setOpen(false);
             }}
           >
-            Применить
+            {t("dashboard.filters.apply")}
           </Button>
         </SheetFooter>
       </SheetContent>

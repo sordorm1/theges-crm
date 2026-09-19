@@ -11,12 +11,9 @@ import { useAppData } from "@/lib/data/store-context";
 import { formatUsd, formatTashkentDateTime } from "@/lib/format";
 import type { ExamRecord } from "@/lib/types";
 import type { FeeField } from "@/lib/api/payments";
+import { useTranslation } from "@/lib/i18n/context";
 
-const FEE_FIELDS: { field: FeeField; label: string }[] = [
-  { field: "registrationFeeUsd", label: "Регистрация" },
-  { field: "examFeeUsd", label: "Экзамен" },
-  { field: "consultationFeeUsd", label: "Консультация" },
-];
+const FEE_FIELDS: FeeField[] = ["registrationFeeUsd", "examFeeUsd", "consultationFeeUsd"];
 
 function CommentDeleteButton({
   examRecordId,
@@ -26,15 +23,16 @@ function CommentDeleteButton({
   commentId: string;
 }) {
   const { deletePaymentComment } = useAppData();
+  const { t } = useTranslation();
   const [deleting, setDeleting] = useState(false);
 
   async function handleDelete() {
-    if (!confirm("Удалить комментарий?")) return;
+    if (!confirm(t("payment.deleteCommentConfirm"))) return;
     setDeleting(true);
     try {
       await deletePaymentComment(examRecordId, commentId);
     } catch {
-      toast.error("Не удалось удалить комментарий");
+      toast.error(t("payment.deleteCommentFailedToast"));
     } finally {
       setDeleting(false);
     }
@@ -55,6 +53,7 @@ function CommentDeleteButton({
 
 function FeeRow({ examRecord, field, label }: { examRecord: ExamRecord; field: FeeField; label: string }) {
   const { updateExamFee } = useAppData();
+  const { t } = useTranslation();
   const currentValue = examRecord[field];
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(currentValue !== undefined ? String(currentValue) : "");
@@ -68,7 +67,7 @@ function FeeRow({ examRecord, field, label }: { examRecord: ExamRecord; field: F
     try {
       const result = await updateExamFee(examRecord.id, field, value, pin);
       if (result.ok) {
-        toast.success(`${label}: сохранено`);
+        toast.success(t("payment.savedToast", label));
         setEditing(false);
         setPinOpen(false);
         setPinError(null);
@@ -80,10 +79,10 @@ function FeeRow({ examRecord, field, label }: { examRecord: ExamRecord; field: F
         return;
       }
       if (result.error === "PIN_INVALID") {
-        setPinError("Неверный код");
+        setPinError(t("payment.wrongPinToast"));
         return;
       }
-      toast.error("Не удалось сохранить сумму");
+      toast.error(t("payment.saveFailedToast"));
     } finally {
       setSaving(false);
     }
@@ -92,7 +91,7 @@ function FeeRow({ examRecord, field, label }: { examRecord: ExamRecord; field: F
   function handleSubmit() {
     const value = Number(draft.replace(",", "."));
     if (Number.isNaN(value) || value < 0) {
-      toast.error("Введите корректную сумму");
+      toast.error(t("payment.invalidAmountToast"));
       return;
     }
     save(value);
@@ -174,6 +173,7 @@ function FeeRow({ examRecord, field, label }: { examRecord: ExamRecord; field: F
 
 export function PaymentSection({ examRecord }: { examRecord: ExamRecord }) {
   const { addPaymentComment } = useAppData();
+  const { t, locale } = useTranslation();
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -184,7 +184,7 @@ export function PaymentSection({ examRecord }: { examRecord: ExamRecord }) {
       await addPaymentComment(examRecord.id, comment.trim());
       setComment("");
     } catch {
-      toast.error("Не удалось добавить комментарий");
+      toast.error(t("payment.addCommentFailedToast"));
     } finally {
       setSubmitting(false);
     }
@@ -193,18 +193,18 @@ export function PaymentSection({ examRecord }: { examRecord: ExamRecord }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card/50 p-3">
       <div className="flex items-center gap-1.5 text-xs font-semibold">
-        Оплата
+        {t("payment.title")}
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        {FEE_FIELDS.map(({ field, label }) => (
-          <FeeRow key={field} examRecord={examRecord} field={field} label={label} />
+        {FEE_FIELDS.map((field) => (
+          <FeeRow key={field} examRecord={examRecord} field={field} label={t(`payment.fields.${field}`)} />
         ))}
       </div>
 
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
           <MessageSquare className="size-3.5" />
-          Комментарии по оплате
+          {t("payment.commentsTitle")}
         </div>
         <div className="flex flex-col gap-1.5">
           {(examRecord.paymentComments ?? []).map((c) => (
@@ -212,21 +212,21 @@ export function PaymentSection({ examRecord }: { examRecord: ExamRecord }) {
               <div className="min-w-0">
                 <div className="break-words">{c.text}</div>
                 <div className="mt-1 text-[11px] text-muted-foreground">
-                  {formatTashkentDateTime(c.createdAt)} (Ташкент)
+                  {formatTashkentDateTime(c.createdAt, locale)} ({t("common.tashkent")})
                 </div>
               </div>
               <CommentDeleteButton examRecordId={examRecord.id} commentId={c.id} />
             </div>
           ))}
           {(examRecord.paymentComments ?? []).length === 0 && (
-            <p className="text-xs text-muted-foreground">Комментариев пока нет</p>
+            <p className="text-xs text-muted-foreground">{t("payment.noComments")}</p>
           )}
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Например: оплатил наличными 50%..."
+            placeholder={t("payment.addCommentPlaceholder")}
             className="min-h-16 flex-1 text-sm"
           />
           <Button
@@ -235,7 +235,7 @@ export function PaymentSection({ examRecord }: { examRecord: ExamRecord }) {
             disabled={!comment.trim() || submitting}
             onClick={handleAddComment}
           >
-            Добавить
+            {t("payment.add")}
           </Button>
         </div>
       </div>

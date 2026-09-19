@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import type { Student } from "@/lib/types";
 import { fullName } from "@/lib/format";
 import { useAppData } from "@/lib/data/store-context";
+import { useTranslation } from "@/lib/i18n/context";
 
 export function StudentSearch({
   onSelect,
@@ -14,6 +15,7 @@ export function StudentSearch({
   onSelect: (student: Student) => void;
 }) {
   const { findStudentsByQuery, partners } = useAppData();
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
 
   const results = query.trim() ? findStudentsByQuery(query).slice(0, 8) : [];
@@ -25,7 +27,7 @@ export function StudentSearch({
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Поиск по паспорту, имени или телефону..."
+          placeholder={t("students.searchPlaceholder")}
           className="pl-9 pr-8"
         />
         {query && (
@@ -89,7 +91,7 @@ export function StudentSearch({
               </AnimatePresence>
               {results.length === 0 && (
                 <div className="px-3.5 py-3 text-sm text-muted-foreground">
-                  Ничего не найдено
+                  {t("common.notFound")}
                 </div>
               )}
             </motion.div>

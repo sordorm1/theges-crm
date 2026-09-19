@@ -29,6 +29,7 @@ import {
   EMPTY_EXAM_RECORD_DRAFT,
   type ExamRecordDraft,
 } from "@/components/students/exam-record-form";
+import { useTranslation } from "@/lib/i18n/context";
 
 export function AddStudentDialog({
   defaultPartnerId,
@@ -38,6 +39,7 @@ export function AddStudentDialog({
   onOpenExisting: (student: Student) => void;
 }) {
   const { partners, addStudent, findStudentsByQuery } = useAppData();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -68,11 +70,11 @@ export function AddStudentDialog({
 
   async function handleSubmit() {
     if (duplicate.length > 0) {
-      toast.error("Такой ученик уже есть в системе");
+      toast.error(t("students.duplicateErrorToast"));
       return;
     }
     if (!firstName.trim() || !lastName.trim() || !passport.trim()) {
-      toast.error("Заполните имя, фамилию и паспортные данные");
+      toast.error(t("students.requiredFieldsToast"));
       return;
     }
 
@@ -102,11 +104,11 @@ export function AddStudentDialog({
           : undefined,
       });
 
-      toast.success(`Ученик ${fullName(created)} добавлен`);
+      toast.success(t("students.addedToast", fullName(created)));
       reset();
       setOpen(false);
     } catch {
-      toast.error("Не удалось сохранить ученика");
+      toast.error(t("students.saveFailedToast"));
     } finally {
       setSaving(false);
     }
@@ -122,32 +124,32 @@ export function AddStudentDialog({
     >
       <DialogTrigger render={<Button className="gap-2" />}>
         <Plus className="size-4" />
-        Добавить ученика
+        {t("students.add")}
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Новый ученик</DialogTitle>
+          <DialogTitle>{t("students.newStudent")}</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="flex flex-col gap-1.5">
-              <Label>Firstname</Label>
+              <Label>{t("students.firstname")}</Label>
               <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Middlename</Label>
+              <Label>{t("students.middlename")}</Label>
               <Input value={middleName} onChange={(e) => setMiddleName(e.target.value)} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Lastname</Label>
+              <Label>{t("students.lastname")}</Label>
               <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label>Паспортные данные</Label>
+              <Label>{t("students.passport")}</Label>
               <Input
                 value={passport}
                 onChange={(e) => setPassport(e.target.value.toUpperCase())}
@@ -155,11 +157,11 @@ export function AddStudentDialog({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Телефон</Label>
+              <Label>{t("students.phone")}</Label>
               <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+998 90 123 45 67" />
             </div>
             <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <Label>Email</Label>
+              <Label>{t("students.email")}</Label>
               <Input
                 type="email"
                 value={email}
@@ -173,7 +175,7 @@ export function AddStudentDialog({
             <div className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
               <div className="flex items-center gap-2 text-xs font-medium text-amber-800">
                 <AlertTriangle className="size-4" />
-                Ученик с такими данными уже есть в системе
+                {t("students.duplicateWarning")}
               </div>
               {duplicate.slice(0, 3).map((s) => (
                 <button
@@ -186,19 +188,19 @@ export function AddStudentDialog({
                   className="flex items-center justify-between rounded-md bg-white px-2.5 py-1.5 text-left text-xs hover:bg-amber-100"
                 >
                   <span className="font-medium">{fullName(s)}</span>
-                  <span className="text-muted-foreground">{s.passportNumber} · открыть →</span>
+                  <span className="text-muted-foreground">{s.passportNumber} · {t("students.openArrow")}</span>
                 </button>
               ))}
             </div>
           )}
 
           <div className="flex flex-col gap-1.5">
-            <Label>Партнёр</Label>
+            <Label>{t("students.partner")}</Label>
             <Select
               value={partnerId}
               onValueChange={(v) => setPartnerId(v ?? "none")}
               items={{
-                none: "Без партнёра",
+                none: t("common.noPartner"),
                 ...Object.fromEntries(partners.map((p) => [p.id, `${p.name} (${p.code})`])),
               }}
             >
@@ -206,7 +208,7 @@ export function AddStudentDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Без партнёра</SelectItem>
+                <SelectItem value="none">{t("common.noPartner")}</SelectItem>
                 {partners.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.name} ({p.code})
@@ -221,11 +223,11 @@ export function AddStudentDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Отмена
+            {t("common.cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={duplicate.length > 0 || saving}>
             {saving && <Loader2 className="size-4 animate-spin" />}
-            Сохранить
+            {t("common.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

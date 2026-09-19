@@ -3,7 +3,7 @@
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { useAppData } from "@/lib/data/store-context";
 import { StudentsTable } from "@/components/students/students-table";
 import { StudentDetailSheet } from "@/components/students/student-detail-sheet";
@@ -17,11 +17,15 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n/context";
+import { exportExamProgramToExcel } from "@/lib/export/exams-excel";
 
 function ExamProgramPageInner() {
   const searchParams = useSearchParams();
   const programKey = searchParams.get("program") ?? "";
   const { students, partners, examPrograms } = useAppData();
+  const { t, locale } = useTranslation();
   const program = examPrograms.find((p) => p.key === programKey);
 
   const [partnerFilter, setPartnerFilter] = useState("all");
@@ -58,9 +62,9 @@ function ExamProgramPageInner() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
-          Все экзамены
+          {t("exams.view.allExams")}
         </Link>
-        <p className="text-sm text-muted-foreground">Программа не найдена</p>
+        <p className="text-sm text-muted-foreground">{t("exams.view.notFound")}</p>
       </div>
     );
   }
@@ -73,32 +77,42 @@ function ExamProgramPageInner() {
           className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
-          Все экзамены
+          {t("exams.view.allExams")}
         </Link>
-        <div className="flex items-center gap-3">
-          <span
-            className="flex size-11 items-center justify-center rounded-xl text-lg font-bold"
-            style={{ backgroundColor: `${program.color}1a`, color: program.color }}
-          >
-            {program.shortName.slice(0, 2)}
-          </span>
-          <div>
-            <h1 className="text-2xl font-bold">{program.name}</h1>
-            <p className="text-sm text-muted-foreground">
-              {programStudents.length} учеников
-            </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span
+              className="flex size-11 items-center justify-center rounded-xl text-lg font-bold"
+              style={{ backgroundColor: `${program.color}1a`, color: program.color }}
+            >
+              {program.shortName.slice(0, 2)}
+            </span>
+            <div>
+              <h1 className="text-2xl font-bold">{program.name}</h1>
+              <p className="text-sm text-muted-foreground">
+                {programStudents.length} {t("exams.view.studentsCount")}
+              </p>
+            </div>
           </div>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => exportExamProgramToExcel(programStudents, program, partners, locale)}
+          >
+            <Download className="size-4" />
+            {t("exams.view.downloadExcel")}
+          </Button>
         </div>
       </div>
 
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div className="flex flex-col gap-1.5">
-          <Label className="text-xs">Партнёр</Label>
+          <Label className="text-xs">{t("exams.view.partner")}</Label>
           <Select
             value={partnerFilter}
             onValueChange={(v) => setPartnerFilter(v ?? "all")}
             items={{
-              all: "Все партнёры",
+              all: t("students.allPartners"),
               ...Object.fromEntries(partners.map((p) => [p.id, p.name])),
             }}
           >
@@ -106,7 +120,7 @@ function ExamProgramPageInner() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Все партнёры</SelectItem>
+              <SelectItem value="all">{t("students.allPartners")}</SelectItem>
               {partners.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   {p.name}
@@ -116,34 +130,34 @@ function ExamProgramPageInner() {
           </Select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label className="text-xs">Статус</Label>
+          <Label className="text-xs">{t("exams.view.status")}</Label>
           <Select
             value={statusFilter}
             onValueChange={(v) => setStatusFilter((v ?? "all") as ExamStatus | "all")}
             items={{
-              all: "Любой",
-              scheduled: "Запланирован",
-              passed: "Сдал",
-              failed: "Не сдал",
+              all: t("status.any"),
+              scheduled: t("status.scheduled"),
+              passed: t("status.passed"),
+              failed: t("status.failed"),
             }}
           >
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Любой</SelectItem>
-              <SelectItem value="scheduled">Запланирован</SelectItem>
-              <SelectItem value="passed">Сдал</SelectItem>
-              <SelectItem value="failed">Не сдал</SelectItem>
+              <SelectItem value="all">{t("status.any")}</SelectItem>
+              <SelectItem value="scheduled">{t("status.scheduled")}</SelectItem>
+              <SelectItem value="passed">{t("status.passed")}</SelectItem>
+              <SelectItem value="failed">{t("status.failed")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label className="text-xs">С даты</Label>
+          <Label className="text-xs">{t("exams.view.fromDate")}</Label>
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-40" />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label className="text-xs">По дату</Label>
+          <Label className="text-xs">{t("exams.view.toDate")}</Label>
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-40" />
         </div>
       </div>

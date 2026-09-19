@@ -15,9 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "@/lib/i18n/context";
 
 function StudentsPageInner() {
   const { students, partners } = useAppData();
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const partnerFromUrl = searchParams.get("partner") ?? "all";
 
@@ -48,8 +50,8 @@ function StudentsPageInner() {
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Ученики</h1>
-          <p className="text-sm text-muted-foreground">{filtered.length} учеников</p>
+          <h1 className="text-2xl font-bold">{t("students.title")}</h1>
+          <p className="text-sm text-muted-foreground">{filtered.length} {t("students.count")}</p>
         </div>
         <AddStudentDialog onOpenExisting={openStudent} />
       </div>
@@ -60,15 +62,15 @@ function StudentsPageInner() {
           value={partnerFilter}
           onValueChange={(v) => setPartnerFilter(v ?? "all")}
           items={{
-            all: "Все партнёры",
+            all: t("students.allPartners"),
             ...Object.fromEntries(partners.map((p) => [p.id, p.name])),
           }}
         >
           <SelectTrigger className="w-52">
-            <SelectValue placeholder="Все партнёры" />
+            <SelectValue placeholder={t("students.allPartners")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Все партнёры</SelectItem>
+            <SelectItem value="all">{t("students.allPartners")}</SelectItem>
             {partners.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.name}

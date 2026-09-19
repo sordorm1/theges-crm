@@ -5,6 +5,7 @@ import { AppDataProvider } from "@/lib/data/store-context";
 import { AppShell } from "@/components/app-shell";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { LocaleProvider } from "@/lib/i18n/context";
 
 const manrope = Manrope({
   variable: "--font-sans",
@@ -19,14 +20,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ru" className={`${manrope.variable} h-full antialiased`}>
+    <html lang="uz" className={`${manrope.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <AppDataProvider>
-          <TooltipProvider>
-            <AppShell>{children}</AppShell>
-            <Toaster richColors position="top-center" />
-          </TooltipProvider>
-        </AppDataProvider>
+        <LocaleProvider>
+          <AppDataProvider>
+            <TooltipProvider>
+              <AppShell>{children}</AppShell>
+              <Toaster richColors position="top-center" />
+            </TooltipProvider>
+          </AppDataProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

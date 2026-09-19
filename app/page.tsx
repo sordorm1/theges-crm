@@ -18,9 +18,11 @@ import { FilterSheet } from "@/components/dashboard/filter-sheet";
 import type { DashboardFilters } from "@/lib/types";
 import { formatDate, fullName } from "@/lib/format";
 import { StatusBadge } from "@/components/status-badge";
+import { useTranslation } from "@/lib/i18n/context";
 
 export default function DashboardPage() {
   const { students, partners, examPrograms, subjects } = useAppData();
+  const { t, locale } = useTranslation();
   const [filters, setFilters] = useState<DashboardFilters>({
     partnerId: "all",
     subject: "all",
@@ -48,9 +50,9 @@ export default function DashboardPage() {
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Дашборд</h1>
+          <h1 className="text-2xl font-bold">{t("dashboard.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Обзор набора учеников, партнёров и курсов
+            {t("dashboard.subtitle")}
           </p>
         </div>
         <FilterSheet
@@ -81,16 +83,16 @@ export default function DashboardPage() {
         <div className="xl:col-span-2 rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold">Последние ученики</h3>
+              <h3 className="text-sm font-semibold">{t("dashboard.recentStudentsTitle")}</h3>
               <p className="text-xs text-muted-foreground">
-                недавно зарегистрированные
+                {t("dashboard.recentStudentsSubtitle")}
               </p>
             </div>
             <Link
               href="/students"
               className="text-xs font-medium text-primary hover:underline"
             >
-              Все ученики →
+              {t("dashboard.allStudents")}
             </Link>
           </div>
           <div className="flex flex-col divide-y divide-border">
@@ -102,7 +104,7 @@ export default function DashboardPage() {
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium">{fullName(s)}</div>
                     <div className="truncate text-xs text-muted-foreground">
-                      {partner?.name ?? "Без партнёра"} · {formatDate(s.createdAt)}
+                      {partner?.name ?? t("common.noPartner")} · {formatDate(s.createdAt, locale)}
                     </div>
                   </div>
                   {lastExam && <StatusBadge status={lastExam.status} />}
@@ -110,7 +112,7 @@ export default function DashboardPage() {
               );
             })}
             {recent.length === 0 && (
-              <p className="py-4 text-sm text-muted-foreground">Нет учеников по фильтру</p>
+              <p className="py-4 text-sm text-muted-foreground">{t("dashboard.noStudentsFiltered")}</p>
             )}
           </div>
         </div>

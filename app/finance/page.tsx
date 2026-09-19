@@ -8,13 +8,7 @@ import { AddDepositDialog } from "@/components/finance/add-deposit-dialog";
 import { Button } from "@/components/ui/button";
 import { formatUsd, formatTashkentDateTime, fullName } from "@/lib/format";
 import type { FinanceTransaction } from "@/lib/types";
-
-const KIND_LABEL: Record<FinanceTransaction["kind"], string> = {
-  deposit: "Депозит",
-  registration: "Регистрация",
-  consultation: "Консультация",
-  exam: "Экзамен",
-};
+import { useTranslation } from "@/lib/i18n/context";
 
 function StatCard({
   icon: Icon,
@@ -45,16 +39,17 @@ function StatCard({
 
 function DeleteTransactionButton({ transactionId }: { transactionId: string }) {
   const { deleteFinanceTransaction } = useAppData();
+  const { t } = useTranslation();
   const [deleting, setDeleting] = useState(false);
 
   async function handleDelete() {
-    if (!confirm("Удалить этот депозит?")) return;
+    if (!confirm(t("finance.deleteConfirm"))) return;
     setDeleting(true);
     try {
       await deleteFinanceTransaction(transactionId);
-      toast.success("Депозит удалён");
+      toast.success(t("finance.deletedToast"));
     } catch {
-      toast.error("Не удалось удалить депозит");
+      toast.error(t("finance.deleteFailedToast"));
       setDeleting(false);
     }
   }
@@ -89,6 +84,7 @@ function PartnerRow({
   transactions: FinanceTransaction[];
   students: ReturnType<typeof useAppData>["students"];
 }) {
+  const { t, locale } = useTranslation();
   const [open, setOpen] = useState(false);
   const balance = deposits - deducted;
 
@@ -112,15 +108,15 @@ function PartnerRow({
         </div>
         <div className="flex shrink-0 items-center gap-4 text-sm">
           <div className="text-right">
-            <div className="text-[10px] text-muted-foreground uppercase">Депозит</div>
+            <div className="text-[10px] text-muted-foreground uppercase">{t("finance.statTotal")}</div>
             <div className="font-mono">{formatUsd(deposits)}</div>
           </div>
           <div className="text-right">
-            <div className="text-[10px] text-muted-foreground uppercase">Списано</div>
+            <div className="text-[10px] text-muted-foreground uppercase">{t("finance.statProfit")}</div>
             <div className="font-mono">{formatUsd(deducted)}</div>
           </div>
           <div className="text-right">
-            <div className="text-[10px] text-muted-foreground uppercase">Остаток</div>
+            <div className="text-[10px] text-muted-foreground uppercase">{t("finance.statBalance")}</div>
             <div className={`font-mono font-semibold ${balance < 0 ? "text-destructive" : ""}`}>
               {formatUsd(balance)}
             </div>
@@ -134,32 +130,36 @@ function PartnerRow({
             <AddDepositDialog defaultPartnerId={partnerId} />
           </div>
           {transactions.length === 0 && (
-            <p className="text-xs text-muted-foreground">Пока нет операций</p>
+            <p className="text-xs text-muted-foreground">{t("finance.noOperations")}</p>
           )}
-          {transactions.map((t) => {
-            const student = students.find((s) => s.id === t.studentId);
+          {transactions.map((t2) => {
+            const student = students.find((s) => s.id === t2.studentId);
+            const isDeposit = t2.kind === "deposit";
+            const isPositive = t2.amountUsd >= 0;
             return (
               <div
-                key={t.id}
+                key={t2.id}
                 className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2 text-sm"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className={t.kind === "deposit" ? "text-emerald-700" : "text-foreground"}>
-                      {t.kind === "deposit" ? "+" : "−"}
-                      {formatUsd(t.amountUsd)}
+                    <span className={isPositive ? "text-emerald-700" : "text-foreground"}>
+                      {isPositive ? "+" : "−"}
+                      {formatUsd(Math.abs(t2.amountUsd))}
                     </span>
-                    <span className="text-xs text-muted-foreground">{KIND_LABEL[t.kind]}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {isDeposit ? (isPositive ? t("finance.deposited") : t("finance.withdrawn")) : t(`finance.kinds.${t2.kind}`)}
+                    </span>
                     {student && (
                       <span className="truncate text-xs text-muted-foreground">· {fullName(student)}</span>
                     )}
                   </div>
                   <div className="mt-0.5 text-[11px] text-muted-foreground">
-                    {formatTashkentDateTime(t.createdAt)} (Ташкент)
-                    {t.note ? ` · ${t.note}` : ""}
+                    {formatTashkentDateTime(t2.createdAt, locale)} ({t("common.tashkent")})
+                    {t2.note ? ` · ${t2.note}` : ""}
                   </div>
                 </div>
-                {t.kind === "deposit" && <DeleteTransactionButton transactionId={t.id} />}
+                {isDeposit && <DeleteTransactionButton transactionId={t2.id} />}
               </div>
             );
           })}
@@ -171,6 +171,7 @@ function PartnerRow({
 
 export default function FinancePage() {
   const { partners, students, financeTransactions } = useAppData();
+  const { t } = useTranslation();
 
   const byPartner = useMemo(() => {
     const map = new Map<
@@ -224,9 +225,9 @@ export default function FinancePage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Финансы</h1>
+          <h1 className="text-2xl font-bold">{t("finance.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Депозиты партнёров и списания за регистрацию, консультации и экзамены
+            {t("finance.subtitle")}
           </p>
         </div>
         <AddDepositDialog />
@@ -235,39 +236,39 @@ export default function FinancePage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={Wallet}
-          label="Всего внесено"
+          label={t("finance.statTotal")}
           value={formatUsd(totals.deposits)}
-          sub="депозиты партнёров"
+          sub={t("finance.statTotalSub")}
           accent="text-blue-600 bg-blue-50"
         />
         <StatCard
           icon={Coins}
-          label="Остаток на депозитах"
+          label={t("finance.statBalance")}
           value={formatUsd(totals.balance)}
-          sub="ещё не списано"
+          sub={t("finance.statBalanceSub")}
           accent="text-amber-600 bg-amber-50"
         />
         <StatCard
           icon={TrendingUp}
-          label="Прибыль"
+          label={t("finance.statProfit")}
           value={formatUsd(totals.deducted)}
-          sub="списано за услуги"
+          sub={t("finance.statProfitSub")}
           accent="text-emerald-600 bg-emerald-50"
         />
         <StatCard
           icon={Hourglass}
-          label="Ожидаемая прибыль"
+          label={t("finance.statExpected")}
           value={formatUsd(totals.expected)}
-          sub="+ ещё не сданные экзамены"
+          sub={t("finance.statExpectedSub")}
           accent="text-violet-600 bg-violet-50"
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-semibold">По партнёрам</h3>
+        <h3 className="text-sm font-semibold">{t("finance.byPartner")}</h3>
         {partnersWithActivity.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            Пока нет ни одного депозита. Нажмите «Добавить депозит», чтобы завести первую запись.
+            {t("finance.noDeposits")}
           </p>
         )}
         {partnersWithActivity.map(({ partner, entry }) => (

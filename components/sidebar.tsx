@@ -6,18 +6,21 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { BASE_PATH } from "@/lib/base-path";
 import { LayoutDashboard, Building2, Users, GraduationCap, Settings2, Wallet } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/context";
+import { LanguageSwitch } from "@/components/language-switch";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Дашборд", icon: LayoutDashboard },
-  { href: "/partners", label: "Партнёры", icon: Building2 },
-  { href: "/students", label: "Ученики", icon: Users },
-  { href: "/exams", label: "Экзамены", icon: GraduationCap },
-  { href: "/finance", label: "Финансы", icon: Wallet },
-  { href: "/settings", label: "Настройки", icon: Settings2 },
-];
+  { href: "/", key: "nav.dashboard", icon: LayoutDashboard },
+  { href: "/partners", key: "nav.partners", icon: Building2 },
+  { href: "/students", key: "nav.students", icon: Users },
+  { href: "/exams", key: "nav.exams", icon: GraduationCap },
+  { href: "/finance", key: "nav.finance", icon: Wallet },
+  { href: "/settings", key: "nav.settings", icon: Settings2 },
+] as const;
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -26,9 +29,9 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           <Image src={`${BASE_PATH}/logo.png`} alt="the GES" width={24} height={24} />
         </div>
         <div className="flex flex-col leading-tight">
-          <span className="text-sm font-bold tracking-wide">the GES</span>
+          <span className="text-sm font-bold tracking-wide">{t("nav.appName")}</span>
           <span className="text-[10px] text-sidebar-foreground/50">
-            Test Prep CRM
+            {t("nav.tagline")}
           </span>
         </div>
       </div>
@@ -51,14 +54,17 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               )}
             >
               <Icon className="size-4 shrink-0" strokeWidth={2.2} />
-              <span className="truncate">{item.label}</span>
+              <span className="truncate">{t(item.key)}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="px-3 py-4 text-[10px] text-sidebar-foreground/40">
-        © {new Date().getFullYear()} the GES
+      <div className="flex flex-col gap-2 px-3 py-4">
+        <LanguageSwitch />
+        <div className="text-[10px] text-sidebar-foreground/40">
+          © {new Date().getFullYear()} the GES
+        </div>
       </div>
     </div>
   );

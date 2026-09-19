@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Phone, Users, Trash2, Loader2 } from "lucide-react";
 import type { Partner } from "@/lib/types";
 import { useAppData } from "@/lib/data/store-context";
+import { useTranslation } from "@/lib/i18n/context";
 
 export function PartnerCard({
   partner,
@@ -19,18 +20,19 @@ export function PartnerCard({
   index: number;
 }) {
   const { deletePartner } = useAppData();
+  const { t } = useTranslation();
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
 
   async function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!confirm(`Удалить партнёра «${partner.name}»? Ученики останутся, но без партнёра.`)) return;
+    if (!confirm(t("partners.deleteConfirm", partner.name))) return;
     setDeleting(true);
     try {
       await deletePartner(partner.id);
-      toast.success("Партнёр удалён");
+      toast.success(t("partners.deletedToast"));
     } catch {
-      toast.error("Не удалось удалить партнёра");
+      toast.error(t("partners.deleteFailedToast"));
       setDeleting(false);
     }
   }
@@ -72,7 +74,7 @@ export function PartnerCard({
             type="button"
             onClick={handleDelete}
             disabled={deleting}
-            aria-label="Удалить партнёра"
+            aria-label={t("partners.deleteAriaLabel")}
             className="flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
@@ -95,7 +97,7 @@ export function PartnerCard({
       <div className="flex items-center gap-1.5 border-t border-border pt-3 text-xs text-muted-foreground">
         <Users className="size-3.5" />
         <span className="font-medium text-foreground">{studentCount}</span>
-        учеников
+        {t("partners.studentsCount")}
       </div>
     </motion.div>
   );

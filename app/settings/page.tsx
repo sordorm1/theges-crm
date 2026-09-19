@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { programsForSubject } from "@/lib/data/programs";
+import { useTranslation } from "@/lib/i18n/context";
 
 function slugify(label: string) {
   return label
@@ -25,6 +26,7 @@ function slugify(label: string) {
 
 function SubjectsCard() {
   const { subjects, addSubject, deleteSubject } = useAppData();
+  const { t } = useTranslation();
   const [label, setLabel] = useState("");
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -34,23 +36,23 @@ function SubjectsCard() {
     setSaving(true);
     try {
       await addSubject(slugify(label), label.trim());
-      toast.success(`Направление «${label.trim()}» добавлено`);
+      toast.success(t("settings.subjects.addedToast", label.trim()));
       setLabel("");
     } catch {
-      toast.error("Не удалось добавить направление");
+      toast.error(t("settings.subjects.addFailedToast"));
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Удалить направление «${name}»? Уровни этого направления тоже удалятся.`)) return;
+    if (!confirm(t("settings.subjects.deleteConfirm", name))) return;
     setDeletingId(id);
     try {
       await deleteSubject(id);
-      toast.success("Направление удалено");
+      toast.success(t("settings.subjects.deletedToast"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось удалить направление");
+      toast.error(e instanceof Error ? e.message : t("settings.subjects.deleteFailedToast"));
     } finally {
       setDeletingId(null);
     }
@@ -58,8 +60,8 @@ function SubjectsCard() {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-      <h3 className="text-sm font-semibold">Направления</h3>
-      <p className="mt-1 text-xs text-muted-foreground">Английский, Испанский, Арабский, Математика...</p>
+      <h3 className="text-sm font-semibold">{t("settings.subjects.title")}</h3>
+      <p className="mt-1 text-xs text-muted-foreground">{t("settings.subjects.subtitle")}</p>
       <div className="mt-4 flex flex-col gap-1.5">
         {subjects.map((s) => (
           <div key={s.id} className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2 text-sm">
@@ -69,7 +71,7 @@ function SubjectsCard() {
               onClick={() => handleDelete(s.id, s.label)}
               disabled={deletingId === s.id}
               className="text-muted-foreground hover:text-destructive"
-              aria-label={`Удалить ${s.label}`}
+              aria-label={t("settings.subjects.deleteAriaLabel", s.label)}
             >
               {deletingId === s.id ? <Loader2 className="size-3.5 animate-spin" /> : <X className="size-3.5" />}
             </button>
@@ -80,7 +82,7 @@ function SubjectsCard() {
         <Input
           value={label}
           onChange={(e) => setLabel(e.target.value)}
-          placeholder="Новое направление"
+          placeholder={t("settings.subjects.placeholder")}
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />
         <Button onClick={handleAdd} disabled={!label.trim() || saving}>
@@ -93,6 +95,7 @@ function SubjectsCard() {
 
 function LevelsCard() {
   const { subjects, subjectLevels, addSubjectLevel, deleteSubjectLevel } = useAppData();
+  const { t } = useTranslation();
   const [subjectId, setSubjectId] = useState("");
   const [label, setLabel] = useState("");
   const [saving, setSaving] = useState(false);
@@ -104,23 +107,23 @@ function LevelsCard() {
     setSaving(true);
     try {
       await addSubjectLevel(subjectId, label.trim());
-      toast.success(`Уровень «${label.trim()}» добавлен`);
+      toast.success(t("settings.levels.addedToast", label.trim()));
       setLabel("");
     } catch {
-      toast.error("Не удалось добавить уровень");
+      toast.error(t("settings.levels.addFailedToast"));
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Удалить уровень «${name}»?`)) return;
+    if (!confirm(t("settings.levels.deleteConfirm", name))) return;
     setDeletingId(id);
     try {
       await deleteSubjectLevel(id);
-      toast.success("Уровень удалён");
+      toast.success(t("settings.levels.deletedToast"));
     } catch {
-      toast.error("Не удалось удалить уровень");
+      toast.error(t("settings.levels.deleteFailedToast"));
     } finally {
       setDeletingId(null);
     }
@@ -128,8 +131,8 @@ function LevelsCard() {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-      <h3 className="text-sm font-semibold">Уровни по направлениям</h3>
-      <p className="mt-1 text-xs text-muted-foreground">Например, для английского: A1–C2</p>
+      <h3 className="text-sm font-semibold">{t("settings.levels.title")}</h3>
+      <p className="mt-1 text-xs text-muted-foreground">{t("settings.levels.subtitle")}</p>
       <div className="mt-4 flex flex-col gap-3">
         {subjects.map((s) => {
           const levels = subjectLevels.filter((l) => l.subjectId === s.id);
@@ -149,7 +152,7 @@ function LevelsCard() {
                       onClick={() => handleDelete(l.id, l.label)}
                       disabled={deletingId === l.id}
                       className="text-muted-foreground hover:text-destructive"
-                      aria-label={`Удалить уровень ${l.label}`}
+                      aria-label={t("settings.levels.deleteAriaLabel", l.label)}
                     >
                       {deletingId === l.id ? (
                         <Loader2 className="size-3 animate-spin" />
@@ -167,7 +170,7 @@ function LevelsCard() {
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Select value={subjectId} onValueChange={(v) => setSubjectId(v ?? "")} items={labels}>
           <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Направление" />
+            <SelectValue placeholder={t("settings.levels.directionPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
             {subjects.map((s) => (
@@ -180,7 +183,7 @@ function LevelsCard() {
         <Input
           value={label}
           onChange={(e) => setLabel(e.target.value)}
-          placeholder="Например, B2"
+          placeholder={t("settings.levels.placeholder")}
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />
         <Button onClick={handleAdd} disabled={!subjectId || !label.trim() || saving}>
@@ -193,6 +196,7 @@ function LevelsCard() {
 
 function ExamProgramsCard() {
   const { subjects, examPrograms, addExamProgram, deleteExamProgram } = useAppData();
+  const { t } = useTranslation();
   const [subjectId, setSubjectId] = useState("");
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
@@ -205,24 +209,24 @@ function ExamProgramsCard() {
     setSaving(true);
     try {
       await addExamProgram(subjectId, slugify(name), name.trim(), shortName.trim() || name.trim(), "#1e5fbf");
-      toast.success(`Программа «${name.trim()}» добавлена`);
+      toast.success(t("settings.programs.addedToast", name.trim()));
       setName("");
       setShortName("");
     } catch {
-      toast.error("Не удалось добавить программу");
+      toast.error(t("settings.programs.addFailedToast"));
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Удалить программу «${name}»?`)) return;
+    if (!confirm(t("settings.programs.deleteConfirm", name))) return;
     setDeletingId(id);
     try {
       await deleteExamProgram(id);
-      toast.success("Программа удалена");
+      toast.success(t("settings.programs.deletedToast"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось удалить программу");
+      toast.error(e instanceof Error ? e.message : t("settings.programs.deleteFailedToast"));
     } finally {
       setDeletingId(null);
     }
@@ -230,8 +234,8 @@ function ExamProgramsCard() {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-      <h3 className="text-sm font-semibold">Программы экзаменов</h3>
-      <p className="mt-1 text-xs text-muted-foreground">IELTS, SAT, GRE и другие</p>
+      <h3 className="text-sm font-semibold">{t("settings.programs.title")}</h3>
+      <p className="mt-1 text-xs text-muted-foreground">{t("settings.programs.subtitle")}</p>
       <div className="mt-4 flex flex-col gap-3">
         {subjects.map((s) => {
           const programs = programsForSubject(examPrograms, s.key);
@@ -251,7 +255,7 @@ function ExamProgramsCard() {
                       onClick={() => handleDelete(p.id, p.name)}
                       disabled={deletingId === p.id}
                       className="text-muted-foreground hover:text-destructive"
-                      aria-label={`Удалить программу ${p.name}`}
+                      aria-label={t("settings.programs.deleteAriaLabel", p.name)}
                     >
                       {deletingId === p.id ? (
                         <Loader2 className="size-3 animate-spin" />
@@ -269,7 +273,7 @@ function ExamProgramsCard() {
       <div className="mt-4 flex flex-col gap-2">
         <Select value={subjectId} onValueChange={(v) => setSubjectId(v ?? "")} items={labels}>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Направление" />
+            <SelectValue placeholder={t("settings.programs.directionPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
             {subjects.map((s) => (
@@ -280,11 +284,11 @@ function ExamProgramsCard() {
           </SelectContent>
         </Select>
         <div className="flex gap-2">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Название, напр. TOEFL" />
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("settings.programs.namePlaceholder")} />
           <Input
             value={shortName}
             onChange={(e) => setShortName(e.target.value)}
-            placeholder="Кратко"
+            placeholder={t("settings.programs.shortNamePlaceholder")}
             className="w-28"
           />
           <Button onClick={handleAdd} disabled={!subjectId || !name.trim() || saving}>
@@ -297,12 +301,13 @@ function ExamProgramsCard() {
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold">Настройки</h1>
+        <h1 className="text-2xl font-bold">{t("settings.title")}</h1>
         <p className="text-sm text-muted-foreground">
-          Направления, уровни и программы экзаменов — используются во всех формах
+          {t("settings.subtitle")}
         </p>
       </div>
 
