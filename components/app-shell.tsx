@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { BASE_PATH } from "@/lib/base-path";
 import { useTranslation } from "@/lib/i18n/context";
+import { RouteGuard } from "@/components/route-guard";
 
 const MIN_SPLASH_MS = 1000;
 const MAX_SPLASH_MS = 2000;
@@ -77,7 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {t("appShell.loadError")}: {error}
               </div>
             ) : ready ? (
-              children
+              <RouteGuard>{children}</RouteGuard>
             ) : (
               <div className="flex h-64 items-center justify-center text-muted-foreground">
                 <Loader2 className="size-6 animate-spin" />

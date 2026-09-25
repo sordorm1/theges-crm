@@ -6,6 +6,8 @@ import { AppShell } from "@/components/app-shell";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LocaleProvider } from "@/lib/i18n/context";
+import { AuthProvider } from "@/lib/auth/auth-context";
+import { AuthGate } from "@/components/auth-gate";
 
 const manrope = Manrope({
   variable: "--font-sans",
@@ -23,12 +25,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="uz" className={`${manrope.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <LocaleProvider>
-          <AppDataProvider>
-            <TooltipProvider>
-              <AppShell>{children}</AppShell>
-              <Toaster richColors position="top-center" />
-            </TooltipProvider>
-          </AppDataProvider>
+          <AuthProvider>
+            <AuthGate>
+              <AppDataProvider>
+                <TooltipProvider>
+                  <AppShell>{children}</AppShell>
+                </TooltipProvider>
+              </AppDataProvider>
+            </AuthGate>
+            <Toaster richColors position="top-center" />
+          </AuthProvider>
         </LocaleProvider>
       </body>
     </html>
