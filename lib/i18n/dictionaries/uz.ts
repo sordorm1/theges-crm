@@ -140,8 +140,10 @@ const uz: Dictionary = {
       passport: "Pasport",
       partner: "Hamkor",
       program: "Dastur",
+      level: "Daraja",
       registeredAt: "Ro'yxatdan o'tgan sana",
       status: "Holat",
+      result: "Natija",
     },
     deleteAriaLabel: "O'quvchini o'chirish",
     deleteConfirm: (name: string) =>
@@ -169,6 +171,7 @@ const uz: Dictionary = {
     registration: "Ro'yxatdan o'tish, $",
     exam: "Imtihon, $",
     consultation: "Konsultatsiya, $",
+    result: "Natija",
   },
   studentDetail: {
     editProfile: "O'quvchi ma'lumotlarini tahrirlash",
@@ -195,6 +198,9 @@ const uz: Dictionary = {
     attemptsLabel: (n: number) => `Urinishlar: ${n}`,
     statusChangedToast: "Holat yangilandi",
     firstTry: "Birinchi urinish",
+    resultOk: "O'tdi",
+    resultFail: "Yiqildi",
+    resultChangedToast: "Natija yangilandi",
   },
   secretField: {
     copiedToast: (label: string) => `${label} nusxalandi`,

@@ -93,6 +93,7 @@ export function AddStudentDialog({
               examProgramId: exam.programId,
               date: exam.date || new Date().toISOString(),
               status: exam.status,
+              result: exam.result,
               levelLabel: exam.levelLabel || undefined,
               login: exam.login.trim(),
               password: exam.password.trim(),

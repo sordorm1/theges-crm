@@ -13,12 +13,14 @@ import { useAppData } from "@/lib/data/store-context";
 import { programsForSubject, subjectLabels } from "@/lib/data/programs";
 import type { ExamStatus } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n/context";
+import { StatusButtons, ResultToggle } from "@/components/students/exam-status";
 
 export interface ExamRecordDraft {
   subjectKey: string;
   programId: string;
   date: string;
   status: ExamStatus;
+  result: boolean;
   levelLabel: string;
   login: string;
   password: string;
@@ -33,6 +35,7 @@ export const EMPTY_EXAM_RECORD_DRAFT: ExamRecordDraft = {
   programId: "",
   date: "",
   status: "scheduled",
+  result: true,
   levelLabel: "",
   login: "",
   password: "",
@@ -113,27 +116,10 @@ export function ExamRecordForm({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label>{t("examForm.date")}</Label>
           <Input type="date" value={value.date} onChange={(e) => patch({ date: e.target.value })} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>{t("examForm.status")}</Label>
-          <Select
-            value={value.status}
-            onValueChange={(v) => patch({ status: (v ?? "scheduled") as ExamStatus })}
-            items={{ scheduled: t("status.scheduled"), passed: t("status.passed"), failed: t("status.failed") }}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="scheduled">{t("status.scheduled")}</SelectItem>
-              <SelectItem value="passed">{t("status.passed")}</SelectItem>
-              <SelectItem value="failed">{t("status.failed")}</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
         <div className="flex flex-col gap-1.5">
           <Label>{t("examForm.level")}</Label>
@@ -155,6 +141,19 @@ export function ExamRecordForm({
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label>{t("examForm.status")}</Label>
+          <StatusButtons value={value.status} onChange={(v) => patch({ status: v })} />
+        </div>
+        {value.status === "passed" && (
+          <div className="flex flex-col gap-1.5">
+            <Label>{t("examForm.result")}</Label>
+            <ResultToggle value={value.result} onChange={(v) => patch({ result: v })} />
+          </div>
+        )}
       </div>
 
       <p className="text-xs text-muted-foreground">

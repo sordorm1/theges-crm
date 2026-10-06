@@ -5,7 +5,7 @@ import { reconcileExamRecordFinance } from "../_shared/finance.ts";
 const STUDENT_SELECT = `
   id, first_name, middle_name, last_name, passport_number, phone, email, partner_id, created_at,
   exam_records (
-    id, exam_program_id, date, status, score, level_label, login, password, exam_key,
+    id, exam_program_id, date, status, score, level_label, login, password, exam_key, result,
     registration_fee_usd, exam_fee_usd, consultation_fee_usd,
     payment_comments ( id, exam_record_id, text, created_at )
   )
@@ -30,6 +30,7 @@ function mapStudent(s: any) {
       date: r.date,
       status: r.status,
       score: r.score ?? undefined,
+      result: r.result ?? true,
       levelLabel: r.level_label ?? undefined,
       login: r.login,
       password: r.password,
@@ -52,6 +53,7 @@ interface ExamRecordInput {
   examProgramId: string;
   date: string;
   status: string;
+  result?: boolean;
   levelLabel?: string;
   login: string;
   password: string;
@@ -74,6 +76,7 @@ interface StudentProfileInput {
 interface ExamRecordEditInput {
   date: string;
   status: string;
+  result: boolean;
   levelLabel?: string;
   login: string;
   password: string;
@@ -132,6 +135,7 @@ Deno.serve(async (req) => {
             exam_program_id: input.examRecord.examProgramId,
             date: input.examRecord.date,
             status: input.examRecord.status,
+            result: input.examRecord.result ?? true,
             level_label: input.examRecord.levelLabel ?? null,
             login: input.examRecord.login,
             password: input.examRecord.password,
@@ -166,6 +170,7 @@ Deno.serve(async (req) => {
           exam_program_id: body.examRecord.examProgramId,
           date: body.examRecord.date,
           status: body.examRecord.status,
+          result: body.examRecord.result ?? true,
           level_label: body.examRecord.levelLabel ?? null,
           login: body.examRecord.login,
           password: body.examRecord.password,
@@ -235,6 +240,7 @@ Deno.serve(async (req) => {
         .update({
           date: r.date,
           status: r.status,
+          result: r.result,
           level_label: r.levelLabel ?? null,
           login: r.login,
           password: r.password,

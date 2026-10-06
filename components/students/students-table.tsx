@@ -18,6 +18,8 @@ import { getProgram } from "@/lib/data/programs";
 import { useAppData } from "@/lib/data/store-context";
 import { StatusBadge } from "@/components/status-badge";
 import { useTranslation } from "@/lib/i18n/context";
+import { ResultQuickSwitch } from "@/components/students/exam-status";
+import type { ExamRecord } from "@/lib/types";
 
 function DeleteStudentButton({ student }: { student: Student }) {
   const { deleteStudent } = useAppData();
@@ -51,6 +53,15 @@ function DeleteStudentButton({ student }: { student: Student }) {
   );
 }
 
+function ResultCell({ record }: { record: ExamRecord }) {
+  if (record.status !== "passed") return <span className="text-muted-foreground">—</span>;
+  return (
+    <div onClick={(e) => e.stopPropagation()} className="inline-flex">
+      <ResultQuickSwitch record={record} size="sm" />
+    </div>
+  );
+}
+
 export function StudentsTable({
   students,
   partners,
@@ -75,8 +86,10 @@ export function StudentsTable({
               <TableHead>{t("students.tableHeaders.passport")}</TableHead>
               <TableHead>{t("students.tableHeaders.partner")}</TableHead>
               <TableHead>{t("students.tableHeaders.program")}</TableHead>
+              <TableHead>{t("students.tableHeaders.level")}</TableHead>
               <TableHead>{t("students.tableHeaders.registeredAt")}</TableHead>
               <TableHead>{t("students.tableHeaders.status")}</TableHead>
+              <TableHead>{t("students.tableHeaders.result")}</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
@@ -106,10 +119,12 @@ export function StudentsTable({
                     )}
                   </TableCell>
                   <TableCell>{program?.shortName ?? "—"}</TableCell>
+                  <TableCell>{lastExam?.levelLabel || "—"}</TableCell>
                   <TableCell>{formatDate(s.createdAt, locale)}</TableCell>
                   <TableCell>
                     {lastExam ? <StatusBadge status={lastExam.status} /> : "—"}
                   </TableCell>
+                  <TableCell>{lastExam ? <ResultCell record={lastExam} /> : "—"}</TableCell>
                   <TableCell>
                     <DeleteStudentButton student={s} />
                   </TableCell>

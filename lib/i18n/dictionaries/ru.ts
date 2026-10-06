@@ -138,8 +138,10 @@ const ru = {
       passport: "Паспорт",
       partner: "Партнёр",
       program: "Программа",
+      level: "Уровень",
       registeredAt: "Дата регистрации",
       status: "Статус",
+      result: "Результат",
     },
     deleteAriaLabel: "Удалить ученика",
     deleteConfirm: (name: string) =>
@@ -167,6 +169,7 @@ const ru = {
     registration: "Регистрация, $",
     exam: "Экзамен, $",
     consultation: "Консультация, $",
+    result: "Результат",
   },
   studentDetail: {
     editProfile: "Редактировать данные ученика",
@@ -193,6 +196,9 @@ const ru = {
     attemptsLabel: (n: number) => `Попыток: ${n}`,
     statusChangedToast: "Статус обновлён",
     firstTry: "Первая попытка",
+    resultOk: "Прошёл",
+    resultFail: "Не прошёл",
+    resultChangedToast: "Результат обновлён",
   },
   secretField: {
     copiedToast: (label: string) => `${label} скопирован`,

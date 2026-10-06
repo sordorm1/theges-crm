@@ -16,7 +16,6 @@ import {
   Check,
   X,
   Trash2,
-  Clock,
   GraduationCap,
 } from "lucide-react";
 import {
@@ -36,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { ExamRecord, ExamStatus, Student } from "@/lib/types";
+import type { ExamRecord, Student } from "@/lib/types";
 import { useAppData } from "@/lib/data/store-context";
 import { fullName, formatDate } from "@/lib/format";
 import { getProgram } from "@/lib/data/programs";
@@ -47,7 +46,7 @@ import {
   type ExamRecordDraft,
 } from "@/components/students/exam-record-form";
 import { useTranslation } from "@/lib/i18n/context";
-import { cn } from "@/lib/utils";
+import { StatusQuickSwitch, ResultQuickSwitch } from "@/components/students/exam-status";
 
 function SecretField({ label, value }: { label: string; value: string }) {
   const { t } = useTranslation();
@@ -259,72 +258,6 @@ function ProfileSection({ student, onDeleted }: { student: Student; onDeleted: (
   );
 }
 
-const STATUS_OPTIONS: { value: ExamStatus; icon: typeof Clock }[] = [
-  { value: "scheduled", icon: Clock },
-  { value: "passed", icon: Check },
-  { value: "failed", icon: X },
-];
-
-const STATUS_ACTIVE_CLASSNAMES: Record<ExamStatus, string> = {
-  scheduled: "bg-blue-600 text-white shadow-sm",
-  passed: "bg-emerald-600 text-white shadow-sm",
-  failed: "bg-red-600 text-white shadow-sm",
-};
-
-/** One-tap status switch — the main way clients mark an exam as sat/passed/failed, no edit form needed. */
-function StatusQuickSwitch({ record }: { record: ExamRecord }) {
-  const { updateExamRecord } = useAppData();
-  const { t } = useTranslation();
-  const [pending, setPending] = useState<ExamStatus | null>(null);
-
-  async function handlePick(value: ExamStatus) {
-    if (value === record.status || pending) return;
-    setPending(value);
-    try {
-      await updateExamRecord(record.id, {
-        date: record.date,
-        status: value,
-        levelLabel: record.levelLabel,
-        login: record.login,
-        password: record.password,
-        examKey: record.examKey,
-      });
-      toast.success(t("studentDetail.statusChangedToast"));
-    } catch {
-      toast.error(t("studentDetail.saveFailedToast"));
-    } finally {
-      setPending(null);
-    }
-  }
-
-  return (
-    <div className="flex items-center gap-1 rounded-full bg-muted p-1">
-      {STATUS_OPTIONS.map(({ value, icon: Icon }) => {
-        const active = record.status === value;
-        return (
-          <button
-            key={value}
-            type="button"
-            onClick={() => handlePick(value)}
-            disabled={pending !== null}
-            className={cn(
-              "flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60",
-              active ? STATUS_ACTIVE_CLASSNAMES[value] : "text-muted-foreground hover:bg-background",
-            )}
-          >
-            {pending === value ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Icon className="size-3.5" />
-            )}
-            {t(`status.${value}`)}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function ExamRecordCard({
   record,
   programName,
@@ -362,6 +295,7 @@ function ExamRecordCard({
       await updateExamRecord(record.id, {
         date: date || record.date,
         status: record.status,
+        result: record.result ?? true,
         levelLabel: levelLabel || undefined,
         login,
         password,
@@ -407,6 +341,7 @@ function ExamRecordCard({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <StatusQuickSwitch record={record} />
+          {record.status === "passed" && <ResultQuickSwitch record={record} />}
           {!editing && (
             <>
               <Button variant="ghost" size="icon" className="size-7" onClick={startEdit}>
@@ -523,6 +458,7 @@ function AddExamRecordBlock({
         examProgramId: exam.programId,
         date: exam.date || new Date().toISOString(),
         status: exam.status,
+        result: exam.result,
         levelLabel: exam.levelLabel || undefined,
         login: exam.login.trim(),
         password: exam.password.trim(),

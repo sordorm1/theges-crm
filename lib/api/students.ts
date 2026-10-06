@@ -7,6 +7,7 @@ interface ExamRecordRow {
   date: string;
   status: ExamRecord["status"];
   score: string | null;
+  result: boolean | null;
   level_label: string | null;
   login: string;
   password: string;
@@ -48,6 +49,7 @@ function mapExamRecord(r: ExamRecordRow): ExamRecord {
     date: r.date,
     status: r.status,
     score: r.score ?? undefined,
+    result: r.result ?? true,
     levelLabel: r.level_label ?? undefined,
     login: r.login,
     password: r.password,
@@ -98,6 +100,7 @@ interface ExamRecordInput {
   examProgramId: string;
   date: string;
   status: ExamStatus;
+  result?: boolean;
   levelLabel?: string;
   login: string;
   password: string;
@@ -158,6 +161,7 @@ export async function updateStudentProfile(
 export interface ExamRecordEditInput {
   date: string;
   status: ExamStatus;
+  result: boolean;
   levelLabel?: string;
   login: string;
   password: string;
