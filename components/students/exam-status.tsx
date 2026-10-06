@@ -86,6 +86,7 @@ export function StatusQuickSwitch({ record, size }: { record: ExamRecord; size?:
         date: record.date,
         status: value,
         result: record.result ?? null,
+        received: record.received ?? false,
         levelLabel: record.levelLabel,
         login: record.login,
         password: record.password,
@@ -172,6 +173,7 @@ export function ResultQuickSwitch({ record, size }: { record: ExamRecord; size?:
         date: record.date,
         status: record.status,
         result: value,
+        received: record.received ?? false,
         levelLabel: record.levelLabel,
         login: record.login,
         password: record.password,
@@ -187,5 +189,81 @@ export function ResultQuickSwitch({ record, size }: { record: ExamRecord; size?:
 
   return (
     <ResultToggle value={record.result ?? null} onChange={handleToggle} pending={pending} disabled={pending} size={size} />
+  );
+}
+
+/**
+ * Pure, controlled two-state pill for "has the student picked up their
+ * certificate/result?" Unlike ResultToggle there's no neutral state here —
+ * it's a plain default-false switch (red "Olmadi" until flipped to green
+ * "Oldi").
+ */
+export function ReceivedToggle({
+  value,
+  onChange,
+  pending,
+  disabled,
+  size = "default",
+}: {
+  value: boolean;
+  onChange: (v: boolean) => void;
+  pending?: boolean;
+  disabled?: boolean;
+  size?: "default" | "sm";
+}) {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!value)}
+      disabled={disabled}
+      className={cn(
+        "flex items-center gap-1.5 rounded-full font-semibold transition-colors disabled:opacity-60",
+        pillClasses(size),
+        value ? "bg-emerald-600 text-white shadow-sm" : "bg-red-600 text-white shadow-sm",
+      )}
+    >
+      {pending ? (
+        <Loader2 className={cn(iconClasses(size), "animate-spin")} />
+      ) : value ? (
+        <Check className={iconClasses(size)} />
+      ) : (
+        <X className={iconClasses(size)} />
+      )}
+      {value ? t("studentDetail.receivedYes") : t("studentDetail.receivedNo")}
+    </button>
+  );
+}
+
+/** One-tap switch for an existing exam record's pickup status — saves immediately. Only meaningful once status === "passed". */
+export function ReceivedQuickSwitch({ record, size }: { record: ExamRecord; size?: "default" | "sm" }) {
+  const { updateExamRecord } = useAppData();
+  const { t } = useTranslation();
+  const [pending, setPending] = useState(false);
+
+  async function handleToggle(value: boolean) {
+    if (pending) return;
+    setPending(true);
+    try {
+      await updateExamRecord(record.id, {
+        date: record.date,
+        status: record.status,
+        result: record.result ?? null,
+        received: value,
+        levelLabel: record.levelLabel,
+        login: record.login,
+        password: record.password,
+        examKey: record.examKey,
+      });
+      toast.success(t("studentDetail.receivedChangedToast"));
+    } catch {
+      toast.error(t("studentDetail.saveFailedToast"));
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <ReceivedToggle value={record.received ?? false} onChange={handleToggle} pending={pending} disabled={pending} size={size} />
   );
 }

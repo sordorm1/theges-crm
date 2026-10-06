@@ -13,7 +13,7 @@ import { useAppData } from "@/lib/data/store-context";
 import { programsForSubject, subjectLabels } from "@/lib/data/programs";
 import type { ExamStatus } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n/context";
-import { StatusButtons, ResultToggle } from "@/components/students/exam-status";
+import { StatusButtons, ResultToggle, ReceivedToggle } from "@/components/students/exam-status";
 
 export interface ExamRecordDraft {
   subjectKey: string;
@@ -21,6 +21,7 @@ export interface ExamRecordDraft {
   date: string;
   status: ExamStatus;
   result: boolean | null;
+  received: boolean;
   levelLabel: string;
   login: string;
   password: string;
@@ -36,6 +37,7 @@ export const EMPTY_EXAM_RECORD_DRAFT: ExamRecordDraft = {
   date: "",
   status: "scheduled",
   result: null,
+  received: false,
   levelLabel: "",
   login: "",
   password: "",
@@ -152,6 +154,12 @@ export function ExamRecordForm({
           <div className="flex flex-col gap-1.5">
             <Label>{t("examForm.result")}</Label>
             <ResultToggle value={value.result} onChange={(v) => patch({ result: v })} />
+          </div>
+        )}
+        {value.status === "passed" && (
+          <div className="flex flex-col gap-1.5">
+            <Label>{t("examForm.received")}</Label>
+            <ReceivedToggle value={value.received} onChange={(v) => patch({ received: v })} />
           </div>
         )}
       </div>

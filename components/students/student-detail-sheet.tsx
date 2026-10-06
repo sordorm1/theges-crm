@@ -46,7 +46,7 @@ import {
   type ExamRecordDraft,
 } from "@/components/students/exam-record-form";
 import { useTranslation } from "@/lib/i18n/context";
-import { StatusQuickSwitch, ResultQuickSwitch } from "@/components/students/exam-status";
+import { StatusQuickSwitch, ResultQuickSwitch, ReceivedQuickSwitch } from "@/components/students/exam-status";
 
 function SecretField({ label, value }: { label: string; value: string }) {
   const { t } = useTranslation();
@@ -296,6 +296,7 @@ function ExamRecordCard({
         date: date || record.date,
         status: record.status,
         result: record.result ?? null,
+        received: record.received ?? false,
         levelLabel: levelLabel || undefined,
         login,
         password,
@@ -342,6 +343,7 @@ function ExamRecordCard({
         <div className="flex shrink-0 items-center gap-2">
           <StatusQuickSwitch record={record} />
           {record.status === "passed" && <ResultQuickSwitch record={record} />}
+          {record.status === "passed" && <ReceivedQuickSwitch record={record} />}
           {!editing && (
             <>
               <Button variant="ghost" size="icon" className="size-7" onClick={startEdit}>
@@ -459,6 +461,7 @@ function AddExamRecordBlock({
         date: exam.date || new Date().toISOString(),
         status: exam.status,
         result: exam.result,
+        received: exam.received,
         levelLabel: exam.levelLabel || undefined,
         login: exam.login.trim(),
         password: exam.password.trim(),

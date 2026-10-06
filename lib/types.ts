@@ -40,6 +40,8 @@ export interface ExamRecord {
   score?: string;
   /** Only meaningful when status === "passed": null = not yet marked, true = cleared the required score ("o'tdi"), false = fell short ("yiqildi"). */
   result?: boolean | null;
+  /** Only meaningful when status === "passed": has the student picked up their certificate/result ("oldi")? Defaults to false ("olmadi"). */
+  received?: boolean;
   levelLabel?: string;
   login: string;
   password: string;

@@ -142,6 +142,7 @@ const ru = {
       registeredAt: "Дата регистрации",
       status: "Статус",
       result: "Результат",
+      received: "Получил",
     },
     deleteAriaLabel: "Удалить ученика",
     deleteConfirm: (name: string) =>
@@ -170,6 +171,7 @@ const ru = {
     exam: "Экзамен, $",
     consultation: "Консультация, $",
     result: "Результат",
+    received: "Получил результат",
   },
   studentDetail: {
     editProfile: "Редактировать данные ученика",
@@ -200,6 +202,9 @@ const ru = {
     resultOk: "Прошёл",
     resultFail: "Не прошёл",
     resultChangedToast: "Результат обновлён",
+    receivedYes: "Получил",
+    receivedNo: "Не получил",
+    receivedChangedToast: "Отметка обновлена",
   },
   secretField: {
     copiedToast: (label: string) => `${label} скопирован`,

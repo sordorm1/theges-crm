@@ -144,6 +144,7 @@ const uz: Dictionary = {
       registeredAt: "Ro'yxatdan o'tgan sana",
       status: "Holat",
       result: "Natija",
+      received: "Oldimi",
     },
     deleteAriaLabel: "O'quvchini o'chirish",
     deleteConfirm: (name: string) =>
@@ -172,6 +173,7 @@ const uz: Dictionary = {
     exam: "Imtihon, $",
     consultation: "Konsultatsiya, $",
     result: "Natija",
+    received: "Natijani oldimi",
   },
   studentDetail: {
     editProfile: "O'quvchi ma'lumotlarini tahrirlash",
@@ -202,6 +204,9 @@ const uz: Dictionary = {
     resultOk: "O'tdi",
     resultFail: "Yiqildi",
     resultChangedToast: "Natija yangilandi",
+    receivedYes: "Oldi",
+    receivedNo: "Olmadi",
+    receivedChangedToast: "Belgi yangilandi",
   },
   secretField: {
     copiedToast: (label: string) => `${label} nusxalandi`,

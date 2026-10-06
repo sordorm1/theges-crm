@@ -5,7 +5,7 @@ import { reconcileExamRecordFinance } from "../_shared/finance.ts";
 const STUDENT_SELECT = `
   id, first_name, middle_name, last_name, passport_number, phone, email, partner_id, created_at,
   exam_records (
-    id, exam_program_id, date, status, score, level_label, login, password, exam_key, result,
+    id, exam_program_id, date, status, score, level_label, login, password, exam_key, result, received,
     registration_fee_usd, exam_fee_usd, consultation_fee_usd,
     payment_comments ( id, exam_record_id, text, created_at )
   )
@@ -31,6 +31,7 @@ function mapStudent(s: any) {
       status: r.status,
       score: r.score ?? undefined,
       result: r.result ?? null,
+      received: r.received ?? false,
       levelLabel: r.level_label ?? undefined,
       login: r.login,
       password: r.password,
@@ -54,6 +55,7 @@ interface ExamRecordInput {
   date: string;
   status: string;
   result?: boolean | null;
+  received?: boolean;
   levelLabel?: string;
   login: string;
   password: string;
@@ -77,6 +79,7 @@ interface ExamRecordEditInput {
   date: string;
   status: string;
   result: boolean | null;
+  received: boolean;
   levelLabel?: string;
   login: string;
   password: string;
@@ -136,6 +139,7 @@ Deno.serve(async (req) => {
             date: input.examRecord.date,
             status: input.examRecord.status,
             result: input.examRecord.result ?? null,
+            received: input.examRecord.received ?? false,
             level_label: input.examRecord.levelLabel ?? null,
             login: input.examRecord.login,
             password: input.examRecord.password,
@@ -171,6 +175,7 @@ Deno.serve(async (req) => {
           date: body.examRecord.date,
           status: body.examRecord.status,
           result: body.examRecord.result ?? null,
+          received: body.examRecord.received ?? false,
           level_label: body.examRecord.levelLabel ?? null,
           login: body.examRecord.login,
           password: body.examRecord.password,
@@ -241,6 +246,7 @@ Deno.serve(async (req) => {
           date: r.date,
           status: r.status,
           result: r.result,
+          received: r.received,
           level_label: r.levelLabel ?? null,
           login: r.login,
           password: r.password,
