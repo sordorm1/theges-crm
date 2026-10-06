@@ -188,6 +188,10 @@ const ru = {
     selectProgramToast: "Выберите направление и экзамен",
     examAddedToast: "Экзамен добавлен",
     examAddFailedToast: "Не удалось добавить экзамен",
+    attemptBadge: (n: number) => `${n}-я попытка`,
+    attemptsLabel: (n: number) => `Попыток: ${n}`,
+    statusChangedToast: "Статус обновлён",
+    firstTry: "Первая попытка",
   },
   secretField: {
     copiedToast: (label: string) => `${label} скопирован`,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Eye,
@@ -16,6 +16,8 @@ import {
   Check,
   X,
   Trash2,
+  Clock,
+  GraduationCap,
 } from "lucide-react";
 import {
   Dialog,
@@ -38,7 +40,6 @@ import type { ExamRecord, ExamStatus, Student } from "@/lib/types";
 import { useAppData } from "@/lib/data/store-context";
 import { fullName, formatDate } from "@/lib/format";
 import { getProgram } from "@/lib/data/programs";
-import { StatusBadge } from "@/components/status-badge";
 import { PaymentSection } from "@/components/students/payment-section";
 import {
   ExamRecordForm,
@@ -46,6 +47,7 @@ import {
   type ExamRecordDraft,
 } from "@/components/students/exam-record-form";
 import { useTranslation } from "@/lib/i18n/context";
+import { cn } from "@/lib/utils";
 
 function SecretField({ label, value }: { label: string; value: string }) {
   const { t } = useTranslation();
@@ -257,15 +259,89 @@ function ProfileSection({ student, onDeleted }: { student: Student; onDeleted: (
   );
 }
 
-function ExamRecordCard({ record }: { record: ExamRecord }) {
-  const { examPrograms, updateExamRecord, deleteExamRecord } = useAppData();
+const STATUS_OPTIONS: { value: ExamStatus; icon: typeof Clock }[] = [
+  { value: "scheduled", icon: Clock },
+  { value: "passed", icon: Check },
+  { value: "failed", icon: X },
+];
+
+const STATUS_ACTIVE_CLASSNAMES: Record<ExamStatus, string> = {
+  scheduled: "bg-blue-600 text-white shadow-sm",
+  passed: "bg-emerald-600 text-white shadow-sm",
+  failed: "bg-red-600 text-white shadow-sm",
+};
+
+/** One-tap status switch — the main way clients mark an exam as sat/passed/failed, no edit form needed. */
+function StatusQuickSwitch({ record }: { record: ExamRecord }) {
+  const { updateExamRecord } = useAppData();
+  const { t } = useTranslation();
+  const [pending, setPending] = useState<ExamStatus | null>(null);
+
+  async function handlePick(value: ExamStatus) {
+    if (value === record.status || pending) return;
+    setPending(value);
+    try {
+      await updateExamRecord(record.id, {
+        date: record.date,
+        status: value,
+        levelLabel: record.levelLabel,
+        login: record.login,
+        password: record.password,
+        examKey: record.examKey,
+      });
+      toast.success(t("studentDetail.statusChangedToast"));
+    } catch {
+      toast.error(t("studentDetail.saveFailedToast"));
+    } finally {
+      setPending(null);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1 rounded-full bg-muted p-1">
+      {STATUS_OPTIONS.map(({ value, icon: Icon }) => {
+        const active = record.status === value;
+        return (
+          <button
+            key={value}
+            type="button"
+            onClick={() => handlePick(value)}
+            disabled={pending !== null}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-60",
+              active ? STATUS_ACTIVE_CLASSNAMES[value] : "text-muted-foreground hover:bg-background",
+            )}
+          >
+            {pending === value ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Icon className="size-3.5" />
+            )}
+            {t(`status.${value}`)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ExamRecordCard({
+  record,
+  programName,
+  attemptNumber,
+  totalAttempts,
+}: {
+  record: ExamRecord;
+  programName: string;
+  attemptNumber: number;
+  totalAttempts: number;
+}) {
+  const { updateExamRecord, deleteExamRecord } = useAppData();
   const { t, locale } = useTranslation();
-  const program = getProgram(examPrograms, record.examProgramId);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [date, setDate] = useState(record.date?.slice(0, 10) ?? "");
-  const [status, setStatus] = useState<ExamStatus>(record.status);
   const [levelLabel, setLevelLabel] = useState(record.levelLabel ?? "");
   const [login, setLogin] = useState(record.login);
   const [password, setPassword] = useState(record.password);
@@ -273,7 +349,6 @@ function ExamRecordCard({ record }: { record: ExamRecord }) {
 
   function startEdit() {
     setDate(record.date?.slice(0, 10) ?? "");
-    setStatus(record.status);
     setLevelLabel(record.levelLabel ?? "");
     setLogin(record.login);
     setPassword(record.password);
@@ -286,7 +361,7 @@ function ExamRecordCard({ record }: { record: ExamRecord }) {
     try {
       await updateExamRecord(record.id, {
         date: date || record.date,
-        status,
+        status: record.status,
         levelLabel: levelLabel || undefined,
         login,
         password,
@@ -302,7 +377,7 @@ function ExamRecordCard({ record }: { record: ExamRecord }) {
   }
 
   async function handleDelete() {
-    if (!confirm(t("studentDetail.examDeleteConfirm", program?.name ?? t("studentDetail.examProgramFallback")))) return;
+    if (!confirm(t("studentDetail.examDeleteConfirm", programName))) return;
     setDeleting(true);
     try {
       await deleteExamRecord(record.id);
@@ -315,19 +390,23 @@ function ExamRecordCard({ record }: { record: ExamRecord }) {
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border p-4">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <div className="text-sm font-semibold">{program?.name ?? record.examProgramId}</div>
-          {!editing && (
-            <div className="text-xs text-muted-foreground">
-              {formatDate(record.date, locale)}
-              {record.score ? ` · ${t("studentDetail.score")}: ${record.score}` : ""}
-              {record.levelLabel ? ` · ${t("studentDetail.level")}: ${record.levelLabel}` : ""}
-            </div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {totalAttempts > 1 ? (
+            <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-bold text-secondary-foreground">
+              {t("studentDetail.attemptBadge", attemptNumber)}
+            </span>
+          ) : (
+            <span className="text-xs font-medium text-muted-foreground">{t("studentDetail.firstTry")}</span>
           )}
+          <span className="text-xs text-muted-foreground">
+            {formatDate(record.date, locale)}
+            {record.score ? ` · ${t("studentDetail.score")}: ${record.score}` : ""}
+            {record.levelLabel ? ` · ${t("studentDetail.level")}: ${record.levelLabel}` : ""}
+          </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {!editing && <StatusBadge status={record.status} />}
+          <StatusQuickSwitch record={record} />
           {!editing && (
             <>
               <Button variant="ghost" size="icon" className="size-7" onClick={startEdit}>
@@ -349,27 +428,10 @@ function ExamRecordCard({ record }: { record: ExamRecord }) {
 
       {editing ? (
         <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label>{t("examForm.date")}</Label>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label>{t("examForm.status")}</Label>
-              <Select
-                value={status}
-                onValueChange={(v) => setStatus((v ?? "scheduled") as ExamStatus)}
-                items={{ scheduled: t("status.scheduled"), passed: t("status.passed"), failed: t("status.failed") }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="scheduled">{t("status.scheduled")}</SelectItem>
-                  <SelectItem value="passed">{t("status.passed")}</SelectItem>
-                  <SelectItem value="failed">{t("status.failed")}</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>{t("examForm.level")}</Label>
@@ -475,6 +537,44 @@ function AddExamRecordBlock({ studentId }: { studentId: string }) {
   );
 }
 
+/** All attempts at one exam program, oldest first, grouped under a single heading so retakes read as "exam X, attempt N" instead of a flat unlabeled list. */
+function ExamProgramGroup({ examProgramId, records }: { examProgramId: string; records: ExamRecord[] }) {
+  const { examPrograms } = useAppData();
+  const { t } = useTranslation();
+  const program = getProgram(examPrograms, examProgramId);
+  const name = program?.name ?? examProgramId;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <span
+          className="flex size-7 shrink-0 items-center justify-center rounded-lg"
+          style={{ backgroundColor: `${program?.color ?? "#64748b"}1a`, color: program?.color ?? "#64748b" }}
+        >
+          <GraduationCap className="size-4" />
+        </span>
+        <h5 className="text-sm font-bold">{name}</h5>
+        {records.length > 1 && (
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            {t("studentDetail.attemptsLabel", records.length)}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col gap-3 border-l-2 border-border/70 pl-4">
+        {records.map((r, idx) => (
+          <ExamRecordCard
+            key={r.id}
+            record={r}
+            programName={name}
+            attemptNumber={idx + 1}
+            totalAttempts={records.length}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function StudentDetailSheet({
   student,
   open,
@@ -485,6 +585,21 @@ export function StudentDetailSheet({
   onOpenChange: (o: boolean) => void;
 }) {
   const { t, locale } = useTranslation();
+  // Oldest-first per exam, preserved in the order each exam program was first taken.
+  const groups = useMemo(() => {
+    if (!student) return [];
+    const order: string[] = [];
+    const byProgram = new Map<string, ExamRecord[]>();
+    for (const r of student.examRecords) {
+      if (!byProgram.has(r.examProgramId)) {
+        byProgram.set(r.examProgramId, []);
+        order.push(r.examProgramId);
+      }
+      byProgram.get(r.examProgramId)!.push(r);
+    }
+    return order.map((examProgramId) => ({ examProgramId, records: byProgram.get(examProgramId)! }));
+  }, [student]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
@@ -510,8 +625,8 @@ export function StudentDetailSheet({
                     {t("studentDetail.noExams")}
                   </p>
                 )}
-                {student.examRecords.map((r) => (
-                  <ExamRecordCard key={r.id} record={r} />
+                {groups.map((g) => (
+                  <ExamProgramGroup key={g.examProgramId} examProgramId={g.examProgramId} records={g.records} />
                 ))}
 
                 <AddExamRecordBlock studentId={student.id} />
