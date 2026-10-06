@@ -20,7 +20,7 @@ export interface ExamRecordDraft {
   programId: string;
   date: string;
   status: ExamStatus;
-  result: boolean;
+  result: boolean | null;
   levelLabel: string;
   login: string;
   password: string;
@@ -35,7 +35,7 @@ export const EMPTY_EXAM_RECORD_DRAFT: ExamRecordDraft = {
   programId: "",
   date: "",
   status: "scheduled",
-  result: true,
+  result: null,
   levelLabel: "",
   login: "",
   password: "",

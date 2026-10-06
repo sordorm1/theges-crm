@@ -30,7 +30,7 @@ function mapStudent(s: any) {
       date: r.date,
       status: r.status,
       score: r.score ?? undefined,
-      result: r.result ?? true,
+      result: r.result ?? null,
       levelLabel: r.level_label ?? undefined,
       login: r.login,
       password: r.password,
@@ -53,7 +53,7 @@ interface ExamRecordInput {
   examProgramId: string;
   date: string;
   status: string;
-  result?: boolean;
+  result?: boolean | null;
   levelLabel?: string;
   login: string;
   password: string;
@@ -76,7 +76,7 @@ interface StudentProfileInput {
 interface ExamRecordEditInput {
   date: string;
   status: string;
-  result: boolean;
+  result: boolean | null;
   levelLabel?: string;
   login: string;
   password: string;
@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
             exam_program_id: input.examRecord.examProgramId,
             date: input.examRecord.date,
             status: input.examRecord.status,
-            result: input.examRecord.result ?? true,
+            result: input.examRecord.result ?? null,
             level_label: input.examRecord.levelLabel ?? null,
             login: input.examRecord.login,
             password: input.examRecord.password,
@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
           exam_program_id: body.examRecord.examProgramId,
           date: body.examRecord.date,
           status: body.examRecord.status,
-          result: body.examRecord.result ?? true,
+          result: body.examRecord.result ?? null,
           level_label: body.examRecord.levelLabel ?? null,
           login: body.examRecord.login,
           password: body.examRecord.password,

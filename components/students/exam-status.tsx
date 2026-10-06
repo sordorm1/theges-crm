@@ -85,7 +85,7 @@ export function StatusQuickSwitch({ record, size }: { record: ExamRecord; size?:
       await updateExamRecord(record.id, {
         date: record.date,
         status: value,
-        result: record.result ?? true,
+        result: record.result ?? null,
         levelLabel: record.levelLabel,
         login: record.login,
         password: record.password,
@@ -110,7 +110,12 @@ export function StatusQuickSwitch({ record, size }: { record: ExamRecord; size?:
   );
 }
 
-/** Pure, controlled result pill — tap to flip between "o'tdi" (ok) and "yiqildi" (not ok). */
+/**
+ * Pure, controlled result pill. Starts neutral (null, "Natija" — nothing
+ * decided yet, deliberately NOT pre-set to either answer so it can't be
+ * mistaken for a real confirmation). Tap cycles null/false -> true ("o'tdi")
+ * -> false ("yiqildi") -> true, etc.
+ */
 export function ResultToggle({
   value,
   onChange,
@@ -118,32 +123,37 @@ export function ResultToggle({
   disabled,
   size = "default",
 }: {
-  value: boolean;
+  value: boolean | null;
   onChange: (v: boolean) => void;
   pending?: boolean;
   disabled?: boolean;
   size?: "default" | "sm";
 }) {
   const { t } = useTranslation();
+  const label = value === null ? t("studentDetail.resultUnset") : value ? t("studentDetail.resultOk") : t("studentDetail.resultFail");
   return (
     <button
       type="button"
-      onClick={() => onChange(!value)}
+      onClick={() => onChange(value === false ? true : value === null ? true : false)}
       disabled={disabled}
       className={cn(
         "flex items-center gap-1.5 rounded-full font-semibold transition-colors disabled:opacity-60",
         pillClasses(size),
-        value ? "bg-emerald-600 text-white shadow-sm" : "bg-red-600 text-white shadow-sm",
+        value === null
+          ? "bg-muted text-muted-foreground"
+          : value
+            ? "bg-emerald-600 text-white shadow-sm"
+            : "bg-red-600 text-white shadow-sm",
       )}
     >
       {pending ? (
         <Loader2 className={cn(iconClasses(size), "animate-spin")} />
-      ) : value ? (
+      ) : value === null ? null : value ? (
         <ThumbsUp className={iconClasses(size)} />
       ) : (
         <ThumbsDown className={iconClasses(size)} />
       )}
-      {value ? t("studentDetail.resultOk") : t("studentDetail.resultFail")}
+      {label}
     </button>
   );
 }
@@ -176,6 +186,6 @@ export function ResultQuickSwitch({ record, size }: { record: ExamRecord; size?:
   }
 
   return (
-    <ResultToggle value={record.result ?? true} onChange={handleToggle} pending={pending} disabled={pending} size={size} />
+    <ResultToggle value={record.result ?? null} onChange={handleToggle} pending={pending} disabled={pending} size={size} />
   );
 }

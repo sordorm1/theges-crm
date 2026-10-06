@@ -196,6 +196,7 @@ const ru = {
     attemptsLabel: (n: number) => `Попыток: ${n}`,
     statusChangedToast: "Статус обновлён",
     firstTry: "Первая попытка",
+    resultUnset: "Результат",
     resultOk: "Прошёл",
     resultFail: "Не прошёл",
     resultChangedToast: "Результат обновлён",

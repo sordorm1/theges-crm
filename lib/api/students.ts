@@ -49,7 +49,7 @@ function mapExamRecord(r: ExamRecordRow): ExamRecord {
     date: r.date,
     status: r.status,
     score: r.score ?? undefined,
-    result: r.result ?? true,
+    result: r.result ?? null,
     levelLabel: r.level_label ?? undefined,
     login: r.login,
     password: r.password,
@@ -81,7 +81,7 @@ function mapStudent(s: StudentRow): Student {
 const STUDENT_SELECT = `
   id, first_name, middle_name, last_name, passport_number, phone, email, partner_id, created_at,
   exam_records (
-    id, exam_program_id, date, status, score, level_label, login, password, exam_key,
+    id, exam_program_id, date, status, score, level_label, login, password, exam_key, result,
     registration_fee_usd, exam_fee_usd, consultation_fee_usd,
     payment_comments ( id, exam_record_id, text, created_at )
   )
@@ -100,7 +100,7 @@ interface ExamRecordInput {
   examProgramId: string;
   date: string;
   status: ExamStatus;
-  result?: boolean;
+  result?: boolean | null;
   levelLabel?: string;
   login: string;
   password: string;
@@ -161,7 +161,7 @@ export async function updateStudentProfile(
 export interface ExamRecordEditInput {
   date: string;
   status: ExamStatus;
-  result: boolean;
+  result: boolean | null;
   levelLabel?: string;
   login: string;
   password: string;

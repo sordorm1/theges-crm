@@ -295,7 +295,7 @@ function ExamRecordCard({
       await updateExamRecord(record.id, {
         date: date || record.date,
         status: record.status,
-        result: record.result ?? true,
+        result: record.result ?? null,
         levelLabel: levelLabel || undefined,
         login,
         password,

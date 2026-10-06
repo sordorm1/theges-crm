@@ -38,8 +38,8 @@ export interface ExamRecord {
   date: string; // ISO date
   status: ExamStatus;
   score?: string;
-  /** Only meaningful when status === "passed": did the student clear the required score (true, "o'tdi") or fall short (false, "yiqildi")? */
-  result?: boolean;
+  /** Only meaningful when status === "passed": null = not yet marked, true = cleared the required score ("o'tdi"), false = fell short ("yiqildi"). */
+  result?: boolean | null;
   levelLabel?: string;
   login: string;
   password: string;

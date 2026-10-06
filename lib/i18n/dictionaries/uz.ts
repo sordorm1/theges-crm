@@ -198,6 +198,7 @@ const uz: Dictionary = {
     attemptsLabel: (n: number) => `Urinishlar: ${n}`,
     statusChangedToast: "Holat yangilandi",
     firstTry: "Birinchi urinish",
+    resultUnset: "Natija",
     resultOk: "O'tdi",
     resultFail: "Yiqildi",
     resultChangedToast: "Natija yangilandi",
