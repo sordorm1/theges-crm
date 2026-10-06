@@ -45,9 +45,12 @@ export const EMPTY_EXAM_RECORD_DRAFT: ExamRecordDraft = {
 export function ExamRecordForm({
   value,
   onChange,
+  lockedProgramName,
 }: {
   value: ExamRecordDraft;
   onChange: (v: ExamRecordDraft) => void;
+  /** When set, the direction/exam pickers are replaced by this label — used for "add another attempt", where the exam is already known. */
+  lockedProgramName?: string;
 }) {
   const { subjects, examPrograms, subjectLevels } = useAppData();
   const { t } = useTranslation();
@@ -64,47 +67,51 @@ export function ExamRecordForm({
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-border p-4">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <Label>{t("examForm.direction")}</Label>
-          <Select
-            value={value.subjectKey}
-            onValueChange={(v) => patch({ subjectKey: v ?? "", programId: "", levelLabel: "" })}
-            items={labels}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={t("examForm.selectDirection")} />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(labels).map(([key, label]) => (
-                <SelectItem key={key} value={key}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {lockedProgramName ? (
+        <div className="rounded-lg bg-muted px-3 py-2 text-sm font-semibold">{lockedProgramName}</div>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label>{t("examForm.direction")}</Label>
+            <Select
+              value={value.subjectKey}
+              onValueChange={(v) => patch({ subjectKey: v ?? "", programId: "", levelLabel: "" })}
+              items={labels}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t("examForm.selectDirection")} />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(labels).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>{t("examForm.examProgram")}</Label>
+            <Select
+              value={value.programId}
+              onValueChange={(v) => patch({ programId: v ?? "" })}
+              disabled={!value.subjectKey}
+              items={Object.fromEntries(availablePrograms.map((p) => [p.id, p.name]))}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t("examForm.selectExam")} />
+              </SelectTrigger>
+              <SelectContent>
+                {availablePrograms.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>{t("examForm.examProgram")}</Label>
-          <Select
-            value={value.programId}
-            onValueChange={(v) => patch({ programId: v ?? "" })}
-            disabled={!value.subjectKey}
-            items={Object.fromEntries(availablePrograms.map((p) => [p.id, p.name]))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={t("examForm.selectExam")} />
-            </SelectTrigger>
-            <SelectContent>
-              {availablePrograms.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">

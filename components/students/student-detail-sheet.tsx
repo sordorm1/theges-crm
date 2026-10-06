@@ -476,18 +476,38 @@ function ExamRecordCard({
   );
 }
 
-function AddExamRecordBlock({ studentId }: { studentId: string }) {
+/**
+ * Adds an exam record. Used two ways: the plain "add exam" button at the
+ * bottom of the list (full direction/exam picker, for a program the student
+ * hasn't taken yet), and the "add attempt" button inside a program group
+ * (program pre-filled and locked — that's a retake of the same exam).
+ */
+function AddExamRecordBlock({
+  studentId,
+  lockedProgram,
+  triggerLabel,
+  triggerVariant = "outline",
+}: {
+  studentId: string;
+  lockedProgram?: { subjectKey: string; programId: string; programName: string };
+  triggerLabel: string;
+  triggerVariant?: "outline" | "ghost";
+}) {
   const { addExamRecordToStudent } = useAppData();
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [exam, setExam] = useState<ExamRecordDraft>(EMPTY_EXAM_RECORD_DRAFT);
+  const initialDraft: ExamRecordDraft = {
+    ...EMPTY_EXAM_RECORD_DRAFT,
+    ...(lockedProgram && { subjectKey: lockedProgram.subjectKey, programId: lockedProgram.programId }),
+  };
+  const [exam, setExam] = useState<ExamRecordDraft>(initialDraft);
 
   if (!open) {
     return (
-      <Button variant="outline" className="w-full gap-2" onClick={() => setOpen(true)}>
+      <Button variant={triggerVariant} className="w-full gap-2" onClick={() => setOpen(true)}>
         <Plus className="size-4" />
-        {t("studentDetail.addExam")}
+        {triggerLabel}
       </Button>
     );
   }
@@ -512,7 +532,7 @@ function AddExamRecordBlock({ studentId }: { studentId: string }) {
         consultationFeeUsd: exam.consultationFeeUsd ? Number(exam.consultationFeeUsd) : undefined,
       });
       toast.success(t("studentDetail.examAddedToast"));
-      setExam(EMPTY_EXAM_RECORD_DRAFT);
+      setExam(initialDraft);
       setOpen(false);
     } catch {
       toast.error(t("studentDetail.examAddFailedToast"));
@@ -523,7 +543,7 @@ function AddExamRecordBlock({ studentId }: { studentId: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <ExamRecordForm value={exam} onChange={setExam} />
+      <ExamRecordForm value={exam} onChange={setExam} lockedProgramName={lockedProgram?.programName} />
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={() => setOpen(false)}>
           {t("common.cancel")}
@@ -538,7 +558,15 @@ function AddExamRecordBlock({ studentId }: { studentId: string }) {
 }
 
 /** All attempts at one exam program, oldest first, grouped under a single heading so retakes read as "exam X, attempt N" instead of a flat unlabeled list. */
-function ExamProgramGroup({ examProgramId, records }: { examProgramId: string; records: ExamRecord[] }) {
+function ExamProgramGroup({
+  studentId,
+  examProgramId,
+  records,
+}: {
+  studentId: string;
+  examProgramId: string;
+  records: ExamRecord[];
+}) {
   const { examPrograms } = useAppData();
   const { t } = useTranslation();
   const program = getProgram(examPrograms, examProgramId);
@@ -570,6 +598,14 @@ function ExamProgramGroup({ examProgramId, records }: { examProgramId: string; r
             totalAttempts={records.length}
           />
         ))}
+        {program && (
+          <AddExamRecordBlock
+            studentId={studentId}
+            lockedProgram={{ subjectKey: program.subject, programId: examProgramId, programName: name }}
+            triggerLabel={t("studentDetail.addAttempt")}
+            triggerVariant="ghost"
+          />
+        )}
       </div>
     </div>
   );
@@ -626,10 +662,15 @@ export function StudentDetailSheet({
                   </p>
                 )}
                 {groups.map((g) => (
-                  <ExamProgramGroup key={g.examProgramId} examProgramId={g.examProgramId} records={g.records} />
+                  <ExamProgramGroup
+                    key={g.examProgramId}
+                    studentId={student.id}
+                    examProgramId={g.examProgramId}
+                    records={g.records}
+                  />
                 ))}
 
-                <AddExamRecordBlock studentId={student.id} />
+                <AddExamRecordBlock studentId={student.id} triggerLabel={t("studentDetail.addExam")} />
               </div>
             </div>
           </>

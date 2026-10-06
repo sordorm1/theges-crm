@@ -188,6 +188,7 @@ const ru = {
     selectProgramToast: "Выберите направление и экзамен",
     examAddedToast: "Экзамен добавлен",
     examAddFailedToast: "Не удалось добавить экзамен",
+    addAttempt: "Добавить попытку (пересдача)",
     attemptBadge: (n: number) => `${n}-я попытка`,
     attemptsLabel: (n: number) => `Попыток: ${n}`,
     statusChangedToast: "Статус обновлён",

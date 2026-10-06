@@ -190,6 +190,7 @@ const uz: Dictionary = {
     selectProgramToast: "Yo'nalish va imtihonni tanlang",
     examAddedToast: "Imtihon qo'shildi",
     examAddFailedToast: "Imtihonni qo'shib bo'lmadi",
+    addAttempt: "Urinish qo'shish (qayta topshirish)",
     attemptBadge: (n: number) => `${n}-urinish`,
     attemptsLabel: (n: number) => `Urinishlar: ${n}`,
     statusChangedToast: "Holat yangilandi",
